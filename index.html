@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WMS Simulator – Formation Cariste</title>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#f97316;--primary-dark:#ea580c;--primary-light:#eff6ff;
+  --success:#10b981;--success-light:#f0fdf4;
+  --warning:#d97706;--warning-light:#fffbeb;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --neutral:#6b7280;--neutral-light:#f9fafb;
+  --border:#e5e7eb;--sidebar-w:240px;
+  --text:#111827;--text-muted:#6b7280;
+  --radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.12);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f3f4f6;color:var(--text);min-height:100vh;display:flex}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+
+#sidebar{
+  width:var(--sidebar-w);min-height:100vh;background:#0f172a;
+  color:#e2e8f0;display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;z-index:100;transition:.3s
+}
+#sidebar .logo{padding:20px 16px;border-bottom:1px solid #334155;display:flex;align-items:center;gap:10px}
+#sidebar .logo i{font-size:22px;color:var(--primary)}
+#sidebar .logo span{font-size:1rem;font-weight:700;letter-spacing:.3px}
+#sidebar .logo small{font-size:.68rem;color:#94a3b8;display:block;margin-top:1px}
+nav{flex:1;padding:12px 0}
+nav .nav-item{
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  cursor:pointer;border-radius:8px;margin:2px 8px;
+  font-size:.875rem;font-weight:500;color:#94a3b8;transition:.15s
+}
+nav .nav-item:hover{background:#334155;color:#fff}
+nav .nav-item.active{background:var(--primary);color:#fff}
+nav .nav-item i{width:18px;text-align:center;font-size:.95rem}
+nav .nav-sep{font-size:.7rem;color:#475569;padding:14px 20px 4px;text-transform:uppercase;letter-spacing:.8px}
+#sidebar-footer{padding:12px 16px;border-top:1px solid #334155;font-size:.75rem;color:#475569}
+#hamburger{display:none;position:fixed;top:12px;left:12px;z-index:200;background:#1e293b;color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:1.1rem}
+
+#main{margin-left:var(--sidebar-w);flex:1;padding:24px;min-height:100vh;transition:.3s}
+.page{display:none}.page.active{display:block}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.topbar h1{font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.topbar h1 i{color:var(--primary)}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:8px;font-size:.855rem;font-weight:600;transition:.15s;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#15803d}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#b91c1c}
+.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#b45309}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{background:var(--neutral-light)}
+.btn-sm{padding:5px 11px;font-size:.78rem}
+.btn-icon{padding:7px;border-radius:7px;background:#fff;border:1px solid var(--border);color:var(--text)}.btn-icon:hover{background:var(--neutral-light)}
+
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.card-title{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:7px}
+.card-title i{color:var(--primary)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:6px}
+.stat-card .stat-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:4px}
+.stat-card .stat-value{font-size:1.7rem;font-weight:800;line-height:1}
+.stat-card .stat-label{font-size:.78rem;color:var(--text-muted);font-weight:500}
+.bg-blue{background:var(--primary-light);color:var(--primary)}
+.bg-green{background:var(--success-light);color:var(--success)}
+.bg-orange{background:var(--warning-light);color:var(--warning)}
+.bg-red{background:var(--danger-light);color:var(--danger)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.855rem}
+th{background:#f8fafc;padding:10px 12px;text-align:left;font-weight:600;color:var(--text-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8fafc}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.74rem;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-orange{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-gray{background:#f3f4f6;color:#374151}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px}
+.form-control{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;transition:.15s;background:#fff;color:var(--text)}
+.form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.form-actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:90%;max-width:520px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto;animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.modal-close{background:none;border:none;font-size:1.3rem;color:var(--text-muted);cursor:pointer;padding:2px 6px;border-radius:5px}
+.modal-close:hover{background:var(--neutral-light)}
+
+#scanner-container{position:relative;width:100%;max-width:480px;margin:0 auto;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:4/3}
+#scanner-video{width:100%;height:100%;object-fit:cover;display:block}
+#scanner-canvas{display:none}
+.scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scanner-frame{width:65%;aspect-ratio:1;border:3px solid rgba(255,255,255,.8);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.scanner-line{position:absolute;width:60%;height:2px;background:var(--primary);animation:scan 2s linear infinite;border-radius:2px}
+@keyframes scan{0%{top:20%}50%{top:75%}100%{top:20%}}
+.scan-feedback{
+  text-align:center;padding:12px;margin-top:12px;border-radius:10px;
+  font-weight:700;font-size:1rem;display:none;
+}
+.scan-feedback.success{display:block;background:var(--success-light);color:var(--success);border:1.5px solid #bbf7d0}
+.scan-feedback.error{display:block;background:var(--danger-light);color:var(--danger);border:1.5px solid #fecaca}
+
+#terminal-card{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#e2e8f0;border-radius:14px;padding:20px}
+#terminal-card .card-title{color:#e2e8f0}
+#terminal-card .card-title i{color:#60a5fa}
+#order-items-list{max-height:320px;overflow-y:auto}
+.order-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #334155;gap:8px}
+.order-row:last-child{border-bottom:none}
+.order-row .item-name{font-weight:600;font-size:.9rem}
+.order-row .item-sku{font-size:.74rem;color:#94a3b8}
+.order-qty{display:flex;align-items:center;gap:6px}
+.order-qty button{background:#334155;border:none;color:#e2e8f0;width:26px;height:26px;border-radius:5px;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.order-qty button:hover{background:#475569}
+.order-qty span{min-width:26px;text-align:center;font-weight:700}
+.order-total{border-top:1px solid #334155;margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center}
+.order-total .total-label{color:#94a3b8;font-size:.85rem}
+.order-total .total-value{font-size:1.4rem;font-weight:800;color:#60a5fa}
+
+.qr-print-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.qr-label{border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;background:#fff}
+.qr-label canvas,.qr-label img{margin:0 auto;display:block}
+.qr-label .label-name{font-size:.78rem;font-weight:700;margin-top:6px;word-break:break-word}
+.qr-label .label-sku{font-size:.7rem;color:var(--text-muted)}
+.hist-in{color:var(--success)}.hist-out{color:var(--danger)}
+
+.alert{padding:12px 16px;border-radius:9px;margin-bottom:10px;display:flex;align-items:center;gap:9px;font-size:.875rem}
+.alert-warning{background:var(--warning-light);color:#92400e;border:1px solid #fcd34d}
+.alert-danger{background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5}
+
+#toast-container{position:fixed;top:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:#1e293b;color:#fff;padding:13px 18px;border-radius:10px;
+  font-size:.855rem;font-weight:600;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:9px;min-width:230px;
+  animation:slideIn .25s ease;border-left:4px solid var(--primary)
+}
+.toast.toast-success{border-color:var(--success)}
+.toast.toast-error{border-color:var(--danger)}
+.toast.toast-warning{border-color:var(--warning)}
+@keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.search-bar{display:flex;align-items:center;gap:8px;flex:1;max-width:320px}
+.search-bar i{color:var(--text-muted)}
+.search-input{flex:1;padding:8px 12px 8px 36px;border:1.5px solid var(--border);border-radius:8px;font-size:.855rem;background:#fff}
+.search-wrap{position:relative}.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%)}
+.stock-bar{height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:4px}
+.stock-bar-fill{height:100%;border-radius:3px;transition:.5s}
+
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0;padding:14px}
+  #hamburger{display:block}
+  .topbar h1{font-size:1.1rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media print{
+  #sidebar,#hamburger,#toast-container,.btn,.topbar-actions,nav{display:none!important}
+  #main{margin-left:0;padding:0}
+  .card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<button id="hamburger" onclick="toggleSidebar()"><i class="fa fa-bars"></i></button>
+
+<aside id="sidebar">
+  <div class="logo">
+    <i class="fa fa-warehouse"></i>
+    <div>
+      <span>WMS Simulator</span>
+      <small>Formation Cariste</small>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-sep">Principal</div>
+    <div class="nav-item active" onclick="navigate('dashboard')"><i class="fa fa-chart-pie"></i> Tableau de bord</div>
+    <div class="nav-item" onclick="navigate('stock')"><i class="fa fa-boxes-stacking"></i> Gestion des stocks</div>
+    <div class="nav-sep">Opérations</div>
+    <div class="nav-item" onclick="navigate('reception')"><i class="fa fa-truck-ramp-box"></i> Réception</div>
+    <div class="nav-item" onclick="navigate('orders')"><i class="fa fa-basket-shopping"></i> Commandes</div>
+    <div class="nav-item" onclick="navigate('scanner')"><i class="fa fa-qrcode"></i> Scanner QR</div>
+    <div class="nav-sep">Outils</div>
+    <div class="nav-item" onclick="navigate('qrcodes')"><i class="fa fa-print"></i> QR Codes</div>
+    <div class="nav-item" onclick="navigate('history')"><i class="fa fa-clock-rotate-left"></i> Historique</div>
+  </nav>
+  <div id="sidebar-footer">v1.0 – Mode démo actif</div>
+</aside>
+
+<main id="main">
+<div id="toast-container"></div>
+
+<section class="page active" id="page-dashboard">
+  <div class="topbar">
+    <h1><i class="fa fa-chart-pie"></i> Tableau de bord</h1>
+    <div class="topbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="loadDemoData()"><i class="fa fa-database"></i> Charger démo</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAllData()"><i class="fa fa-trash"></i> Réinitialiser</button>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="dash-stats"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="dash-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa fa-triangle-exclamation"></i> Alertes de stock</div>
+      </div>
+      <div id="dash-alerts"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa fa-clock-rotate-left"></i> Derniers mouvements</div>
+      </div>
+      <div id="dash-history"></div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-stock">
+  <div class="topbar">
+    <h1><i class="fa fa-boxes-stacking"></i> Gestion des stocks</h1>
+    <div class="topbar-actions">
+      <div class="search-wrap"><i class="fa fa-search"></i><input class="search-input" id="stock-search" placeholder="Rechercher…" oninput="renderStockTable()"></div>
+      <button class="btn btn-primary" onclick="openArticleModal()"><i class="fa fa-plus"></i> Ajouter article</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="stock-table">
+        <thead><tr>
+          <th>SKU</th><th>Nom</th><th>Catégorie</th><th>Emplacement</th>
+          <th>Stock</th><th>Seuil</th><th>Statut</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="stock-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-reception">
+  <div class="topbar"><h1><i class="fa fa-truck-ramp-box"></i> Réception de marchandises</h1></div>
+  <div class="card" style="max-width:600px">
+    <div class="card-header"><div class="card-title"><i class="fa fa-clipboard-list"></i> Nouveau bon de réception</div></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Article</label>
+        <select class="form-control" id="recep-article"></select>
+      </div>
+      <div class="form-group">
+        <label>Fournisseur</label>
+        <input class="form-control" id="recep-supplier" placeholder="Nom du fournisseur"/>
+      </div>
+      <div class="form-group">
+        <label>Quantité reçue</label>
+        <input class="form-control" type="number" id="recep-qty" min="1" value="1"/>
+      </div>
+      <div class="form-group">
+        <label>Date de réception</label>
+        <input class="form-control" type="date" id="recep-date"/>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Remarques (optionnel)</label>
+        <textarea class="form-control" id="recep-notes" rows="2" placeholder="Notes de réception…"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-success" onclick="validateReception()"><i class="fa fa-check"></i> Valider la réception</button>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-orders">
+  <div class="topbar">
+    <h1><i class="fa fa-basket-shopping"></i> Commandes</h1>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="openNewOrderModal()"><i class="fa fa-plus"></i> Nouvelle commande</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Date</th><th>Client</th><th>Articles</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-scanner">
+  <div class="topbar"><h1><i class="fa fa-qrcode"></i> Scanner QR Code</h1></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start" id="scanner-layout">
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><div class="card-title"><i class="fa fa-camera"></i> Caméra</div></div>
+        <div id="scanner-container">
+          <video id="scanner-video" autoplay playsinline muted></video>
+          <canvas id="scanner-canvas"></canvas>
+          <div class="scanner-overlay"><div class="scanner-frame"></div><div class="scanner-line"></div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="btn-start-scan" onclick="startCamera()"><i class="fa fa-play"></i> Démarrer</button>
+          <button class="btn btn-outline" id="btn-stop-scan" onclick="stopCamera()" disabled><i class="fa fa-stop"></i> Arrêter</button>
+        </div>
+        <div id="scan-feedback" class="scan-feedback"></div>
+        <div style="margin-top:10px;font-size:.78rem;color:var(--text-muted)"><i class="fa fa-keyboard"></i> Pistolet scanner USB/BT compatible</div>
+      </div>
+    </div>
+
+    <div id="terminal-card">
+      <div class="card-header"><div class="card-title"><i class="fa fa-cash-register"></i> Commande en cours</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" style="background:#334155;color:#e2e8f0;border:none" onclick="clearCurrentOrder()"><i class="fa fa-xmark"></i></button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:.78rem;color:#94a3b8;display:block;margin-bottom:4px">CLIENT / N° COMMANDE</label>
+        <input class="form-control" id="scan-client" placeholder="Nom du client…" style="background:#334155;border-color:#475569;color:#e2e8f0"/>
+      </div>
+      <div id="order-items-list"><div style="color:#475569;text-align:center;padding:30px;font-size:.85rem"><i class="fa fa-qrcode" style="font-size:2rem;display:block;margin-bottom:8px"></i>Scannez un article pour l'ajouter</div></div>
+      <div class="order-total">
+        <div class="total-label">TOTAL ARTICLES</div>
+        <div class="total-value" id="order-total-qty">0</div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-success" style="flex:1" onclick="validateCurrentOrder()"><i class="fa fa-check"></i> Valider commande</button>
+        <button class="btn btn-outline btn-sm" onclick="clearCurrentOrder()"><i class="fa fa-trash"></i></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-qrcodes">
+  <div class="topbar">
+    <h1><i class="fa fa-print"></i> Étiquettes QR Code</h1>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="printAllQR()"><i class="fa fa-print"></i> Imprimer tout</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="qr-print-grid" class="qr-print-grid"></div>
+  </div>
+</section>
+
+<section class="page" id="page-history">
+  <div class="topbar"><h1><i class="fa fa-clock-rotate-left"></i> Historique des mouvements</h1></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date/Heure</th><th>Type</th><th>Article</th><th>Qté</th><th>Référence</th><th>Note</th></tr></thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="overlay" id="modal-article">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-box"></i> <span id="article-modal-title">Ajouter un article</span></div>
+      <button class="modal-close" onclick="closeModal('modal-article')">×</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" id="article-id"/>
+      <div class="form-group">
+        <label>Nom de l'article *</label>
+        <input class="form-control" id="article-name" placeholder="ex: Palette Europe"/>
+      </div>
+      <div class="form-group">
+        <label>SKU *</label>
+        <input class="form-control" id="article-sku" placeholder="ex: PAL-EUR-001"/>
+      </div>
+      <div class="form-group">
+        <label>Catégorie</label>
+        <select class="form-control" id="article-category">
+          <option>Palettes</option><option>Cartons</option><option>Consommables</option>
+          <option>Outillage</option><option>Électronique</option><option>Divers</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Emplacement</label>
+        <input class="form-control" id="article-location" placeholder="ex: A-12-3"/>
+      </div>
+      <div class="form-group">
+        <label>Quantité initiale</label>
+        <input class="form-control" type="number" id="article-qty" min="0" value="0"/>
+      </div>
+      <div class="form-group">
+        <label>Seuil d'alerte</label>
+        <input class="form-control" type="number" id="article-threshold" min="0" value="5"/>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveArticle()"><i class="fa fa-save"></i> Enregistrer</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-article')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-order-detail">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-basket-shopping"></i> Détail commande</div>
+      <button class="modal-close" onclick="closeModal('modal-order-detail')">×</button>
+    </div>
+    <div id="order-detail-content"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-print-order" onclick="printOrder()"><i class="fa fa-print"></i> Imprimer PDF</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-order-detail')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-new-order">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa fa-plus"></i> Nouvelle commande manuelle</div>
+      <button class="modal-close" onclick="closeModal('modal-new-order')">×</button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Client</label>
+      <input class="form-control" id="new-order-client" placeholder="Nom du client"/>
+    </div>
+    <div id="new-order-lines"></div>
+    <button class="btn btn-outline btn-sm" onclick="addOrderLine()" style="margin-top:8px"><i class="fa fa-plus"></i> Ajouter ligne</button>
+    <div class="form-actions">
+      <button class="btn btn-success" onclick="saveManualOrder()"><i class="fa fa-check"></i> Valider commande</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-new-order')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function beep(type='success'){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    if(type==='success'){osc.frequency.value=880;gain.gain.value=0.15;osc.start();osc.stop(ctx.currentTime+0.12)}
+    else{osc.frequency.value=220;gain.gain.value=0.2;osc.start();osc.stop(ctx.currentTime+0.3)}
+  }catch(e){}
+}
+
+const DB={
+  get:(k,def=[])=>{try{return JSON.parse(localStorage.getItem(k))??def}catch{return def}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
+};
+function getArticles(){return DB.get('wms_articles',[])}
+function setArticles(v){DB.set('wms_articles',v)}
+function getOrders(){return DB.get('wms_orders',[])}
+function setOrders(v){DB.set('wms_orders',v)}
+function getHistory(){return DB.get('wms_history',[])}
+function setHistory(v){DB.set('wms_history',v)}
+
+function uuid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function now(){return new Date().toLocaleString('fr-BE')}
+function fmtDate(d){return new Date(d).toLocaleDateString('fr-BE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+
+function toast(msg,type='success'){
+  const icons={success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation',info:'fa-circle-info'};
+  const el=document.createElement('div');
+  el.className=`toast toast-${type}`;
+  el.innerHTML=`<i class="fa ${icons[type]||icons.info}"></i>${msg}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400)},2800);
+}
+
+let currentPage='dashboard';
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  currentPage=page;
+  if(page==='dashboard')renderDashboard();
+  if(page==='stock')renderStockTable();
+  if(page==='reception')populateReceptionSelect();
+  if(page==='orders')renderOrdersTable();
+  if(page==='qrcodes')renderQRGrid();
+  if(page==='history')renderHistoryTable();
+  if(page==='scanner'){populateScannerOrder();stopCamera();}
+  document.getElementById('sidebar').classList.remove('open');
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function loadDemoData(){
+  const demo=[
+    {id:'art1',name:'Palette Europe 80x120',sku:'PAL-EUR-001',category:'Palettes',location:'A-01-1',qty:45,threshold:10},
+    {id:'art2',name:'Carton double cannelure',sku:'CAR-DC-002',category:'Cartons',location:'A-02-1',qty:8,threshold:15},
+    {id:'art3',name:'Scotch d\'emballage 50mm',sku:'SCO-50-003',category:'Consommables',location:'B-01-2',qty:120,threshold:20},
+    {id:'art4',name:'Film étirable manuel',sku:'FIL-MAN-004',category:'Consommables',location:'B-02-1',qty:3,threshold:10},
+    {id:'art5',name:'Palette plastique',sku:'PAL-PLA-005',category:'Palettes',location:'A-03-1',qty:22,threshold:5},
+    {id:'art6',name:'Cutter industriel',sku:'CUT-IND-006',category:'Outillage',location:'C-01-1',qty:12,threshold:3},
+    {id:'art7',name:'Étiqueteuse Brother',sku:'ETI-BRO-007',category:'Électronique',location:'C-02-1',qty:2,threshold:1},
+    {id:'art8',name:'Sangles d\'arrimage 5m',sku:'SAN-5M-008',category:'Outillage',location:'C-03-2',qty:18,threshold:5},
+    {id:'art9',name:'Intercalaire carton',sku:'INT-CAR-009',category:'Cartons',location:'A-04-1',qty:0,threshold:30},
+    {id:'art10',name:'Étiquette code-barres',sku:'ETI-CB-010',category:'Consommables',location:'B-03-1',qty:500,threshold:100},
+  ];
+  setArticles(demo);
+  addHistory('system','Données de démonstration chargées','Système','');
+  toast('Données démo chargées (10 articles)','success');
+  renderDashboard();
+}
+function clearAllData(){
+  if(!confirm('Réinitialiser toutes les données ?'))return;
+  localStorage.clear();
+  toast('Données réinitialisées','warning');
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const arts=getArticles();const ords=getOrders();const hist=getHistory();
+  const low=arts.filter(a=>a.qty<=a.threshold);
+  const today=new Date().toLocaleDateString('fr-BE');
+  const todayOrds=ords.filter(o=>new Date(o.date).toLocaleDateString('fr-BE')===today);
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-icon bg-blue"><i class="fa fa-boxes-stacking"></i></div><div class="stat-value">${arts.length}</div><div class="stat-label">Articles en stock</div></div>
+    <div class="stat-card"><div class="stat-icon bg-green"><i class="fa fa-basket-shopping"></i></div><div class="stat-value">${todayOrds.length}</div><div class="stat-label">Commandes aujourd'hui</div></div>
+    <div class="stat-card"><div class="stat-icon bg-orange"><i class="fa fa-triangle-exclamation"></i></div><div class="stat-value">${low.length}</div><div class="stat-label">Alertes stock bas</div></div>
+    <div class="stat-card"><div class="stat-icon bg-red"><i class="fa fa-arrow-down"></i></div><div class="stat-value">${arts.filter(a=>a.qty===0).length}</div><div class="stat-label">Articles épuisés</div></div>
+  `;
+  const alertEl=document.getElementById('dash-alerts');
+  if(low.length===0){alertEl.innerHTML='<div style="color:var(--success);padding:12px;text-align:center"><i class="fa fa-circle-check"></i> Tous les stocks sont OK</div>'}
+  else alertEl.innerHTML=low.map(a=>`<div class="alert ${a.qty===0?'alert-danger':'alert-warning'}"><i class="fa fa-triangle-exclamation"></i><div><strong>${a.name}</strong> – Stock: ${a.qty} / Seuil: ${a.threshold}</div></div>`).join('');
+  const hEl=document.getElementById('dash-history');
+  const recent=hist.slice(-6).reverse();
+  if(recent.length===0)hEl.innerHTML='<div style="color:var(--text-muted);padding:12px;text-align:center">Aucun mouvement</div>';
+  else hEl.innerHTML=recent.map(h=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.82rem"><span class="${h.type==='in'?'hist-in':'hist-out'}"><i class="fa fa-arrow-${h.type==='in'?'up':'down'}"></i> ${h.article}</span><span style="color:var(--text-muted)">${h.type==='in'?'+':'-'}${h.qty}</span></div>`).join('');
+}
+
+function renderStockTable(){
+  const q=(document.getElementById('stock-search')?.value||'').toLowerCase();
+  const arts=getArticles().filter(a=>!q||a.name.toLowerCase().includes(q)||a.sku.toLowerCase().includes(q)||a.category.toLowerCase().includes(q));
+  const tb=document.getElementById('stock-tbody');
+  if(!arts.length){tb.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:20px">Aucun article. <a href="#" onclick="navigate('stock')">Ajoutez-en un.</a></td></tr>`;return}
+  tb.innerHTML=arts.map(a=>{
+    const pct=Math.min(100,Math.round((a.qty/(a.threshold*3||30))*100));
+    const status=a.qty===0?'<span class="badge badge-red"><i class="fa fa-xmark"></i> Épuisé</span>':a.qty<=a.threshold?'<span class="badge badge-orange"><i class="fa fa-triangle-exclamation"></i> Bas</span>':'<span class="badge badge-green"><i class="fa fa-check"></i> OK</span>';
+    const barColor=a.qty===0?'#dc2626':a.qty<=a.threshold?'#d97706':'#16a34a';
+    return `<tr>
+      <td><code style="font-size:.78rem;background:#f1f5f9;padding:2px 6px;border-radius:4px">${a.sku}</code></td>
+      <td><strong>${a.name}</strong></td>
+      <td><span class="badge badge-blue">${a.category}</span></td>
+      <td>${a.location}</td>
+      <td><strong>${a.qty}</strong><div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${barColor}"></div></div></td>
+      <td>${a.threshold}</td>
+      <td>${status}</td>
+      <td>
+        <button class="btn-icon btn-sm" onclick="openArticleModal('${a.id}')" title="Modifier"><i class="fa fa-pen"></i></button>
+        <button class="btn-icon btn-sm" style="color:var(--danger)" onclick="deleteArticle('${a.id}')" title="Supprimer"><i class="fa fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openArticleModal(id=null){
+  document.getElementById('article-modal-title').textContent=id?'Modifier l\'article':'Ajouter un article';
+  if(id){
+    const a=getArticles().find(x=>x.id===id);
+    if(!a)return;
+    document.getElementById('article-id').value=a.id;
+    document.getElementById('article-name').value=a.name;
+    document.getElementById('article-sku').value=a.sku;
+    document.getElementById('article-category').value=a.category;
+    document.getElementById('article-location').value=a.location;
+    document.getElementById('article-qty').value=a.qty;
+    document.getElementById('article-threshold').value=a.threshold;
+  } else {
+    document.getElementById('article-id').value='';
+    ['article-name','article-sku','article-location'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('article-qty').value=0;
+    document.getElementById('article-threshold').value=5;
+  }
+  openModal('modal-article');
+}
+
+function saveArticle(){
+  const name=document.getElementById('article-name').value.trim();
+  const sku=document.getElementById('article-sku').value.trim();
+  if(!name||!sku){toast('Nom et SKU obligatoires','error');return}
+  const arts=getArticles();
+  const id=document.getElementById('article-id').value;
+  const obj={
+    id:id||uuid(),name,sku,
+    category:document.getElementById('article-category').value,
+    location:document.getElementById('article-location').value,
+    qty:parseInt(document.getElementById('article-qty').value)||0,
+    threshold:parseInt(document.getElementById('article-threshold').value)||5
+  };
+  if(id){const i=arts.findIndex(a=>a.id===id);arts[i]=obj}
+  else{
+    if(arts.find(a=>a.sku===sku)){toast('SKU déjà existant','error');return}
+    arts.push(obj);
+  }
+  setArticles(arts);
+  closeModal('modal-article');
+  renderStockTable();
+  toast(id?'Article mis à jour':'Article ajouté','success');
+}
+
+function deleteArticle(id){
+  if(!confirm('Supprimer cet article ?'))return;
+  setArticles(getArticles().filter(a=>a.id!==id));
+  renderStockTable();
+  toast('Article supprimé','warning');
+}
+
+function populateReceptionSelect(){
+  const sel=document.getElementById('recep-article');
+  const arts=getArticles();
+  sel.innerHTML=arts.map(a=>`<option value="${a.id}">${a.name} (${a.sku})</option>`).join('');
+  if(!sel.innerHTML)sel.innerHTML='<option value="">— Aucun article —</option>';
+  document.getElementById('recep-date').value=new Date().toISOString().split('T')[0];
+}
+
+function validateReception(){
+  const artId=document.getElementById('recep-article').value;
+  const qty=parseInt(document.getElementById('recep-qty').value)||0;
+  const supplier=document.getElementById('recep-supplier').value.trim()||'Fournisseur inconnu';
+  if(!artId||qty<=0){toast('Article et quantité requis','error');return}
+  const arts=getArticles();
+  const art=arts.find(a=>a.id===artId);
+  if(!art){toast('Article introuvable','error');return}
+  art.qty+=qty;
+  setArticles(arts);
+  addHistory('in',art.name,qty,supplier,document.getElementById('recep-notes').value);
+  toast(`+${qty} ${art.name} réceptionnés`,'success');
+  beep('success');
+  document.getElementById('recep-qty').value=1;
+  document.getElementById('recep-notes').value='';
+}
+
+function addHistory(type,article,qty,ref='',note=''){
+  const hist=getHistory();
+  hist.push({id:uuid(),type,article,qty,ref,note,date:new Date().toISOString()});
+  setHistory(hist);
+}
+
+function renderHistoryTable(){
+  const hist=getHistory().slice().reverse();
+  const tb=document.getElementById('history-tbody');
+  if(!hist.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Aucun mouvement enregistré</td></tr>';return}
+  tb.innerHTML=hist.map(h=>`<tr>
+    <td>${fmtDate(h.date)}</td>
+    <td><span class="badge ${h.type==='in'?'badge-green':'badge-red'}">${h.type==='in'?'Entrée':'Sortie'}</span></td>
+    <td>${h.article}</td>
+    <td class="${h.type==='in'?'hist-in':'hist-out'}"><strong>${h.type==='in'?'+':'-'}${h.qty}</strong></td>
+    <td>${h.ref||'—'}</td>
+    <td style="max-width:160px;font-size:.8rem;color:var(--text-muted)">${h.note||'—'}</td>
+  </tr>`).join('');
+}
+
+function renderOrdersTable(){
+  const orders=getOrders().slice().reverse();
+  const tb=document.getElementById('orders-tbody');
+  if(!orders.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Aucune commande</td></tr>';return}
+  tb.innerHTML=orders.map(o=>{
+    const statusBadge={pending:'badge-orange',validated:'badge-green',cancelled:'badge-red'}[o.status]||'badge-gray';
+    const statusLabel={pending:'En cours',validated:'Validée',cancelled:'Annulée'}[o.status]||o.status;
+    return `<tr>
+      <td><code style="font-size:.78rem">#${o.id.slice(-6).toUpperCase()}</code></td>
+      <td>${fmtDate(o.date)}</td>
+      <td>${o.client||'—'}</td>
+      <td>${o.items.reduce((s,i)=>s+i.qty,0)} articles</td>
+      <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="showOrderDetail('${o.id}')"><i class="fa fa-eye"></i></button>
+        ${o.status==='validated'?`<button class="btn btn-primary btn-sm" onclick="currentPrintOrderId='${o.id}';printOrder()"><i class="fa fa-print"></i></button>`:''}
+        ${o.status==='pending'?`<button class="btn btn-danger btn-sm" onclick="cancelOrder('${o.id}')"><i class="fa fa-ban"></i></button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function cancelOrder(id){
+  const orders=getOrders();
+  const o=orders.find(x=>x.id===id);
+  if(!o)return;
+  o.status='cancelled';
+  setOrders(orders);
+  renderOrdersTable();
+  toast('Commande annulée','warning');
+}
+
+let currentViewOrderId=null;
+let currentPrintOrderId=null;
+
+function showOrderDetail(id){
+  currentViewOrderId=id;currentPrintOrderId=id;
+  const o=getOrders().find(x=>x.id===id);if(!o)return;
+  const statusLabel={pending:'En cours',validated:'Validée',cancelled:'Annulée'}[o.status]||o.status;
+  document.getElementById('order-detail-content').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:.82rem;color:var(--text-muted)">Commande #${o.id.slice(-6).toUpperCase()} – ${fmtDate(o.date)}</div>
+      <div><strong>Client :</strong> ${o.client||'—'}</div>
+      <div><strong>Statut :</strong> ${statusLabel}</div>
+    </div>
+    <table style="width:100%">
+      <thead><tr><th>SKU</th><th>Article</th><th>Qté</th></tr></thead>
+      <tbody>${o.items.map(i=>`<tr><td><code style="font-size:.75rem">${i.sku}</code></td><td>${i.name}</td><td><strong>${i.qty}</strong></td></tr>`).join('')}</tbody>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+      <strong>Total articles</strong>
+      <strong>${o.items.reduce((s,i)=>s+i.qty,0)}</strong>
+    </div>
+  `;
+  openModal('modal-order-detail');
+}
+
+function printOrder(){
+  const id=currentPrintOrderId;
+  const o=getOrders().find(x=>x.id===id);if(!o)return;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  let y=20;
+  doc.setFont('helvetica','bold');doc.setFontSize(18);
+  doc.text('BON DE PRÉPARATION',105,y,{align:'center'});y+=8;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  doc.text(`Commande #${o.id.slice(-6).toUpperCase()}  |  ${fmtDate(o.date)}`,105,y,{align:'center'});y+=5;
+  doc.text(`Client : ${o.client||'—'}`,105,y,{align:'center'});y+=10;
+  doc.setLineWidth(.3);doc.line(20,y,190,y);y+=6;
+  doc.setFont('helvetica','bold');doc.setFontSize(10);
+  doc.text('SKU',22,y);doc.text('Article',60,y);doc.text('Qté',175,y);y+=5;
+  doc.line(20,y,190,y);y+=5;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);
+  o.items.forEach(item=>{
+    doc.text(item.sku,22,y);doc.text(item.name.substring(0,38),60,y);doc.text(String(item.qty),175,y);y+=6;
+  });
+  y+=3;doc.line(20,y,190,y);y+=6;
+  doc.setFont('helvetica','bold');
+  doc.text('Total articles :',140,y);doc.text(String(o.items.reduce((s,i)=>s+i.qty,0)),175,y);
+  doc.save(`commande-${o.id.slice(-6).toUpperCase()}.pdf`);
+  toast('PDF généré','success');
+}
+
+let newOrderLines=[];
+function openNewOrderModal(){
+  newOrderLines=[{articleId:'',qty:1}];
+  document.getElementById('new-order-client').value='';
+  renderNewOrderLines();
+  openModal('modal-new-order');
+}
+function renderNewOrderLines(){
+  const arts=getArticles();
+  const opts=arts.map(a=>`<option value="${a.id}">${a.name} (stock:${a.qty})</option>`).join('');
+  document.getElementById('new-order-lines').innerHTML=newOrderLines.map((l,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 80px 32px;gap:8px;margin-bottom:8px;align-items:center">
+      <select class="form-control" onchange="newOrderLines[${i}].articleId=this.value"><option value="">— Choisir —</option>${opts}</select>
+      <input class="form-control" type="number" min="1" value="${l.qty}" onchange="newOrderLines[${i}].qty=parseInt(this.value)||1"/>
+      <button class="btn-icon" onclick="newOrderLines.splice(${i},1);renderNewOrderLines()" style="color:var(--danger)"><i class="fa fa-xmark"></i></button>
+    </div>`).join('');
+}
+function addOrderLine(){newOrderLines.push({articleId:'',qty:1});renderNewOrderLines()}
+function saveManualOrder(){
+  const client=document.getElementById('new-order-client').value.trim();
+  const arts=getArticles();
+  const items=[];
+  for(const l of newOrderLines){
+    if(!l.articleId)continue;
+    const a=arts.find(x=>x.id===l.articleId);
+    if(!a)continue;
+    if(a.qty<l.qty){toast(`Stock insuffisant pour ${a.name} (dispo: ${a.qty})`,'error');return}
+    items.push({articleId:a.id,name:a.name,sku:a.sku,qty:l.qty});
+  }
+  if(!items.length){toast('Ajoutez au moins un article','error');return}
+  items.forEach(item=>{
+    const a=arts.find(x=>x.id===item.articleId);
+    a.qty-=item.qty;
+    addHistory('out',item.name,item.qty,client||'Commande manuelle','');
+  });
+  setArticles(arts);
+  const order={id:uuid(),date:new Date().toISOString(),client,items,status:'validated'};
+  const orders=getOrders();orders.push(order);setOrders(orders);
+  closeModal('modal-new-order');
+  renderOrdersTable();
+  toast('Commande validée','success');
+  beep('success');
+}
+
+let scanStream=null;let scanInterval=null;let scanLocked=false;
+let currentOrderItems=[];
+
+function populateScannerOrder(){renderScannerOrder()}
+function renderScannerOrder(){
+  const list=document.getElementById('order-items-list');
+  if(!currentOrderItems.length){
+    list.innerHTML='<div style="color:#475569;text-align:center;padding:30px;font-size:.85rem"><i class="fa fa-qrcode" style="font-size:2rem;display:block;margin-bottom:8px"></i>Scannez un article pour l\'ajouter</div>';
+    document.getElementById('order-total-qty').textContent='0';return;
+  }
+  list.innerHTML=currentOrderItems.map((item,i)=>`
+    <div class="order-row">
+      <div><div class="item-name">${item.name}</div><div class="item-sku">${item.sku}</div></div>
+      <div class="order-qty">
+        <button onclick="changeQty(${i},-1)"><i class="fa fa-minus"></i></button>
+        <span>${item.qty}</span>
+        <button onclick="changeQty(${i},1)"><i class="fa fa-plus"></i></button>
+        <button onclick="removeOrderItem(${i})" style="background:#ef4444;color:#fff"><i class="fa fa-xmark"></i></button>
+      </div>
+    </div>`).join('');
+  document.getElementById('order-total-qty').textContent=currentOrderItems.reduce((s,i)=>s+i.qty,0);
+}
+function changeQty(i,delta){
+  currentOrderItems[i].qty+=delta;
+  if(currentOrderItems[i].qty<=0)currentOrderItems.splice(i,1);
+  renderScannerOrder();
+}
+function removeOrderItem(i){currentOrderItems.splice(i,1);renderScannerOrder()}
+function clearCurrentOrder(){currentOrderItems=[];renderScannerOrder()}
+
+function addScannedItem(sku){
+  const arts=getArticles();
+  const art=arts.find(a=>a.sku===sku||a.id===sku);
+  if(!art){showScanFeedback('Article introuvable : '+sku,false);beep('error');return}
+  if(art.qty<=0){showScanFeedback('Stock épuisé : '+art.name,false);beep('error');return}
+  const existing=currentOrderItems.find(i=>i.articleId===art.id);
+  if(existing)existing.qty++;
+  else currentOrderItems.push({articleId:art.id,name:art.name,sku:art.sku,qty:1});
+  renderScannerOrder();
+  showScanFeedback('✓ '+art.name+' ajouté(e)',true);
+  beep('success');
+}
+
+function showScanFeedback(msg,ok){
+  const el=document.getElementById('scan-feedback');
+  el.textContent=msg;el.className='scan-feedback '+(ok?'success':'error');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.className='scan-feedback',2500);
+}
+
+function validateCurrentOrder(){
+  if(!currentOrderItems.length){toast('Aucun article dans la commande','warning');return}
+  const arts=getArticles();
+  for(const item of currentOrderItems){
+    const a=arts.find(x=>x.id===item.articleId);
+    if(!a||a.qty<item.qty){toast(`Stock insuffisant pour ${item.name}`,'error');return}
+  }
+  const client=document.getElementById('scan-client').value.trim();
+  currentOrderItems.forEach(item=>{
+    const a=arts.find(x=>x.id===item.articleId);
+    a.qty-=item.qty;
+    addHistory('out',item.name,item.qty,client||'Scanner','');
+  });
+  setArticles(arts);
+  const order={id:uuid(),date:new Date().toISOString(),client,items:[...currentOrderItems],status:'validated'};
+  const orders=getOrders();orders.push(order);setOrders(orders);
+  toast('Commande validée ! Stock mis à jour','success');
+  beep('success');
+  clearCurrentOrder();
+  document.getElementById('scan-client').value='';
+}
+
+function startCamera(){
+  if(!navigator.mediaDevices){toast('Caméra non supportée','error');return}
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+    .then(stream=>{
+      scanStream=stream;
+      const vid=document.getElementById('scanner-video');
+      vid.srcObject=stream;vid.play();
+      document.getElementById('btn-start-scan').disabled=true;
+      document.getElementById('btn-stop-scan').disabled=false;
+      toast('Caméra démarrée','success');
+      scanInterval=setInterval(scanFrame,250);
+    })
+    .catch(e=>{toast('Accès caméra refusé : '+e.message,'error')});
+}
+function stopCamera(){
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}
+  clearInterval(scanInterval);scanInterval=null;
+  const vid=document.getElementById('scanner-video');vid.srcObject=null;
+  document.getElementById('btn-start-scan').disabled=false;
+  document.getElementById('btn-stop-scan').disabled=true;
+}
+function scanFrame(){
+  const vid=document.getElementById('scanner-video');
+  if(vid.readyState!==vid.HAVE_ENOUGH_DATA)return;
+  const canvas=document.getElementById('scanner-canvas');
+  canvas.width=vid.videoWidth;canvas.height=vid.videoHeight;
+  const ctx=canvas.getContext('2d');ctx.drawImage(vid,0,0);
+  const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+  if(code&&!scanLocked){
+    scanLocked=true;
+    addScannedItem(code.data);
+    setTimeout(()=>scanLocked=false,1500);
+  }
+}
+
+let gunBuffer='';let gunTimer=null;
+document.addEventListener('keydown',e=>{
+  if(currentPage!=='scanner')return;
+  if(e.key==='Enter'){
+    if(gunBuffer.length>2){addScannedItem(gunBuffer.trim())}
+    gunBuffer='';clearTimeout(gunTimer);return;
+  }
+  if(e.key.length===1){
+    gunBuffer+=e.key;
+    clearTimeout(gunTimer);
+    gunTimer=setTimeout(()=>{gunBuffer=''},600);
+  }
+});
+
+function renderQRGrid(){
+  const arts=getArticles();
+  const grid=document.getElementById('qr-print-grid');
+  if(!arts.length){grid.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:30px">Aucun article. Ajoutez des articles d\'abord.</div>';return}
+  grid.innerHTML=arts.map(a=>`
+    <div class="qr-label" id="qr-wrap-${a.id}">
+      <div id="qr-${a.id}"></div>
+      <div class="label-name">${a.name}</div>
+      <div class="label-sku">${a.sku}</div>
+      <div style="margin-top:6px"><button class="btn btn-outline btn-sm" onclick="printSingleQR('${a.id}')"><i class="fa fa-print"></i></button></div>
+    </div>`).join('');
+  arts.forEach(a=>{
+    const el=document.getElementById('qr-'+a.id);
+    el.innerHTML='';
+    try{new QRCode(el,{text:a.sku,width:110,height:110,colorDark:'#000',colorLight:'#fff'})}
+    catch(e){el.textContent='QR error'}
+  });
+}
+
+function printSingleQR(id){
+  const art=getArticles().find(a=>a.id===id);if(!art)return;
+  const w=window.open('','_blank','width=300,height=300');
+  const el=document.getElementById('qr-'+id);
+  const img=el.querySelector('canvas')||el.querySelector('img');
+  const src=img?(img.tagName==='CANVAS'?img.toDataURL():img.src):'';
+  w.document.write(`<!DOCTYPE html><html><head><title>QR ${art.sku}</title>
+  <style>body{display:flex;flex-direction:column;align-items:center;font-family:sans-serif;padding:20px}img{display:block}</style>
+  </head><body>
+  <img src="${src}" width="150"/><br>
+  <strong style="font-size:14px">${art.name}</strong>
+  <div style="font-size:11px;margin-top:4px;color:#666">${art.sku}</div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+function printAllQR(){
+  const arts=getArticles();if(!arts.length){toast('Aucun article','warning');return}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  let x=15,y=15,col=0;
+  const perRow=4,cellW=45,cellH=55;
+  arts.forEach((art,idx)=>{
+    const el=document.getElementById('qr-'+art.id);
+    if(!el)return;
+    const cvs=el.querySelector('canvas');
+    if(cvs){
+      doc.addImage(cvs.toDataURL('image/png'),'PNG',x+2,y+2,35,35);
+    }
+    doc.setFontSize(7);doc.setFont('helvetica','bold');
+    doc.text(art.name.substring(0,22),x+22,y+40,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(6);
+    doc.text(art.sku,x+22,y+45,{align:'center'});
+    doc.rect(x,y,cellW,cellH);
+    col++;x+=cellW+3;
+    if(col>=perRow){col=0;x=15;y+=cellH+5}
+    if(y>260&&idx<arts.length-1){doc.addPage();x=15;y=15;col=0}
+  });
+  doc.save('etiquettes-qr.pdf');
+  toast('PDF étiquettes généré','success');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderDashboard();
+  if(!getArticles().length)loadDemoData();
+});
+</script>
+</body>
+</html>
