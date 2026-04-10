@@ -1,399 +1,439 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alter Form AID – WMS Simulator Pro</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Alter Form AID – WMS Simulator Formation Cariste</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
 
-    <style>
-        :root {
-            --primary: #f97316;
-            --primary-dark: #ea580c;
-            --primary-light: #fff7ed;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --border: #e2e8f0;
-        }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#f97316;
+  --primary-dark:#ea580c;
+  --primary-light:#fff7ed;
+  --success:#16a34a;
+  --success-light:#f0fdf4;
+  --warning:#d97706;
+  --warning-light:#fffbeb;
+  --danger:#dc2626;
+  --danger-light:#fef2f2;
+  --neutral:#64748b;
+  --bg:#f8fafc;
+  --card:#ffffff;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background-color:var(--bg);color:#1e293b;line-height:1.5;padding-bottom:100px}
+header{background:linear-gradient(135deg, var(--primary), var(--primary-dark));color:#fff;padding:2rem 1rem;text-align:center;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+header h1{font-size:1.75rem;font-weight:800;letter-spacing:-0.025em;margin-bottom:0.5rem}
+.container{max-width:1000px;margin:1.5rem auto;padding:0 1rem}
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 40px; }
+/* MASQUAGE DE L'HISTORIQUE COMME DEMANDÉ */
+#history-section, .journal-container, #journal-list { display: none !important; }
 
-        /* Header identique à l'original */
-        header { 
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
-            color: white; padding: 2rem 1rem; text-align: center; 
-            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
-        }
+nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.5rem;margin-bottom:2rem;background:#fff;padding:0.75rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+nav button{border:none;background:transparent;padding:0.75rem;border-radius:0.75rem;color:var(--neutral);font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:0.25rem}
+nav button i{font-size:1.25rem}
+nav button:hover{background-color:var(--primary-light);color:var(--primary)}
+nav button.active{background-color:var(--primary);color:#fff}
 
-        nav { 
-            display: flex; justify-content: center; gap: 10px; 
-            background: white; padding: 1rem; border-bottom: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 100;
-        }
-        nav button { 
-            padding: 0.7rem 1.2rem; border: none; background: #f1f5f9; 
-            cursor: pointer; font-weight: 600; color: #64748b; border-radius: 10px;
-            transition: all 0.2s;
-        }
-        nav button.active { background: var(--primary); color: white; }
+.card{background:#fff;padding:1.5rem;border-radius:1rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:1.5rem;border:1px solid #e2e8f0}
+.card-title{font-size:1.125rem;font-weight:700;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.5rem;color:#0f172a}
 
-        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
-        
-        .card { 
-            background: var(--card); padding: 1.5rem; border-radius: 15px; 
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid var(--border);
-            margin-bottom: 2rem; 
-        }
+.form-group{margin-bottom:1rem}
+label{display:block;font-size:0.875rem;font-weight:600;margin-bottom:0.25rem;color:var(--neutral)}
+input,select{width:100%;padding:0.625rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.875rem;transition:all 0.2s}
+input:focus,select:focus{outline:none;border-color:var(--primary);ring:2px solid var(--primary-light)}
 
-        h2 { margin-bottom: 1.5rem; font-size: 1.4rem; color: var(--primary-dark); display: flex; align-items: center; gap: 10px; }
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.625rem 1.25rem;border-radius:0.5rem;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;font-size:0.875rem}
+.btn-primary{background-color:var(--primary);color:#fff}
+.btn-primary:hover{background-color:var(--primary-dark)}
+.btn-outline{background-color:transparent;border:1px solid #cbd5e1;color:var(--neutral)}
+.btn-outline:hover{background-color:#f1f5f9}
+.btn-danger{background-color:var(--danger);color:#fff}
 
-        /* Inputs & Boutons */
-        .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; }
-        input, select { 
-            padding: 0.8rem; border: 2px solid #f1f5f9; border-radius: 8px; 
-            outline: none; flex: 1; min-width: 150px; font-size: 1rem;
-        }
-        input:focus { border-color: var(--primary); }
-        .btn { 
-            padding: 0.8rem 1.5rem; border-radius: 8px; border: none; 
-            font-weight: 700; cursor: pointer; transition: 0.3s;
-            display: inline-flex; align-items: center; gap: 8px;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:0.75rem;font-size:0.75rem;text-transform:uppercase;color:var(--neutral);border-bottom:1px solid #e2e8f0}
+td{padding:1rem 0.75rem;font-size:0.875rem;border-bottom:1px solid #f1f5f9}
 
-        /* Tableaux */
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f8fafc; padding: 1rem; text-align: left; color: #64748b; font-size: 0.9rem; border-bottom: 2px solid var(--border); }
-        td { padding: 1rem; border-bottom: 1px solid var(--border); }
+.badge{padding:0.25rem 0.625rem;border-radius:9999px;font-size:0.75rem;font-weight:600}
+.badge-warning{background-color:var(--warning-light);color:var(--warning)}
+.badge-success{background-color:var(--success-light);color:var(--success)}
 
-        /* Status */
-        .status { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-success { background: #dcfce7; color: #166534; }
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.5rem}
+.qr-item{text-align:center;padding:1rem;border:1px solid #e2e8f0;border-radius:0.75rem}
+.qr-canvas-container canvas{margin:0 auto;max-width:100%;height:auto}
 
-        /* Zone d'étiquettes */
-        .label-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; }
-        .label-box { 
-            border: 2px solid var(--border); padding: 1rem; border-radius: 12px; 
-            text-align: center; background: white; 
-        }
-        .label-box svg { width: 100%; height: auto; margin: 10px 0; }
+#video-container{position:relative;width:100%;max-width:500px;margin:0 auto;border-radius:1rem;overflow:hidden;background:#000;aspect-ratio:4/3}
+#video-container video{width:100%;height:100%;object-fit:cover}
+.scan-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60%;height:60%;border:2px solid var(--primary);border-radius:1rem;box-shadow:0 0 0 1000px rgba(0,0,0,0.5)}
 
-        /* Scanner */
-        #cam-box { 
-            width: 100%; max-width: 500px; margin: 1rem auto; overflow: hidden;
-            border-radius: 20px; border: 5px solid var(--primary); display: none;
-        }
-        canvas#preview { width: 100%; }
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:1rem 1.5rem;border-radius:0.75rem;background:#1e293b;color:#fff;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);display:none;z-index:1000;animation:slideIn 0.3s ease-out}
+@keyframes slideIn{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
 
-        /* Historique - Le Journal */
-        .history-card { background: #1e293b; color: #e2e8f0; border: none; }
-        .history-card h2 { color: #f97316; }
-        .log-line { 
-            padding: 8px; border-bottom: 1px solid #334155; font-family: 'Courier New', monospace; 
-            font-size: 0.9rem; display: flex; justify-content: space-between;
-        }
-        .log-time { color: #94a3b8; margin-right: 15px; }
-
-        #toast { 
-            position: fixed; bottom: 20px; right: 20px; padding: 1rem 2rem; 
-            border-radius: 10px; color: white; display: none; z-index: 1000; font-weight: bold;
-        }
-    </style>
+</style>
 </head>
 <body>
 
 <header>
-    <h1><i class="fas fa-boxes-stacked"></i> ALTER FORM AID - WMS SIMULATOR</h1>
-    <p style="margin-top: 10px; opacity: 0.9;">Plateforme de Formation Logistique & Cariste</p>
+  <h1><i class="fas fa-boxes-stacked"></i> ALTER FORM AID</h1>
+  <p>Simulateur WMS - Gestion de Stock & Logistique</p>
 </header>
 
-<nav>
-    <button onclick="showPage('stock')" id="nav-stock" class="active"><i class="fas fa-warehouse"></i> Stock</button>
-    <button onclick="showPage('labels')" id="nav-labels"><i class="fas fa-print"></i> Étiquettes</button>
-    <button onclick="showPage('orders')" id="nav-orders"><i class="fas fa-file-invoice"></i> Commandes</button>
-    <button onclick="showPage('scan')" id="nav-scan"><i class="fas fa-barcode"></i> Scanner & Valider</button>
-</nav>
-
 <div class="container">
-    
-    <section id="page-stock">
-        <div class="card">
-            <h2><i class="fas fa-plus-circle"></i> Ajouter un Article</h2>
-            <div class="input-group">
-                <input type="text" id="in-sku" placeholder="Référence (SKU)">
-                <input type="text" id="in-name" placeholder="Désignation de l'article">
-                <input type="number" id="in-qty" placeholder="Quantité Initiale">
-                <button class="btn btn-primary" onclick="addStock()"><i class="fas fa-plus"></i> Ajouter</button>
-            </div>
-        </div>
-        <div class="card">
-            <h2><i class="fas fa-boxes-packing"></i> État du Stock Actuel</h2>
-            <table id="stock-table">
-                <thead><tr><th>SKU</th><th>Désignation</th><th>Stock</th><th>Action</th></tr></thead>
-                <tbody id="stock-body"></tbody>
-            </table>
-        </div>
-    </section>
+  <nav id="main-nav">
+    <button onclick="setPage('stock')" id="nav-stock" class="active"><i class="fas fa-box"></i>Stock</button>
+    <button onclick="setPage('orders')" id="nav-orders"><i class="fas fa-clipboard-list"></i>Commandes</button>
+    <button onclick="setPage('scanner')" id="nav-scanner"><i class="fas fa-camera"></i>Scanner</button>
+    <button onclick="setPage('labels')" id="nav-labels"><i class="fas fa-print"></i>Étiquettes</button>
+  </nav>
 
-    <section id="page-labels" style="display:none;">
-        <div class="card">
-            <h2><i class="fas fa-qrcode"></i> Codes-Barres & QR Codes</h2>
-            <div id="label-container" class="label-grid"></div>
+  <section id="page-stock">
+    <div class="card">
+      <h2 class="card-title"><i class="fas fa-plus"></i> Ajouter un article</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;align-items:end">
+        <div class="form-group">
+          <label>Désignation</label>
+          <input type="text" id="art-name" placeholder="ex: Palette Europe"/>
         </div>
-    </section>
-
-    <section id="page-orders" style="display:none;">
-        <div class="card">
-            <h2><i class="fas fa-cart-shopping"></i> Préparer une Commande</h2>
-            <div class="input-group">
-                <input type="text" id="order-client" placeholder="Nom du Client">
-                <select id="order-select-item"></select>
-                <input type="number" id="order-qty" placeholder="Qté" style="max-width:80px">
-                <button class="btn btn-primary" onclick="addToOrderTemp()"><i class="fas fa-plus"></i> Ajouter</button>
-            </div>
-            <div id="order-list-tmp" style="padding:15px; background:#f8fafc; border-radius:10px; margin-bottom:15px;">
-                <i>Aucun article sélectionné...</i>
-            </div>
-            <button class="btn btn-primary" id="btn-create-order" style="display:none;" onclick="createFinalOrder()">
-                <i class="fas fa-save"></i> Enregistrer la commande (En préparation)
-            </button>
+        <div class="form-group">
+          <label>Code / SKU</label>
+          <input type="text" id="art-sku" placeholder="ex: PAL-EUR-01"/>
         </div>
-        <div class="card">
-            <h2><i class="fas fa-list-check"></i> Historique des Commandes</h2>
-            <table id="orders-table">
-                <thead><tr><th>ID</th><th>Client</th><th>Statut</th><th>Détails</th></tr></thead>
-                <tbody id="orders-body"></tbody>
-            </table>
+        <div class="form-group">
+          <label>Quantité</label>
+          <input type="number" id="art-qty" value="0"/>
         </div>
-    </section>
-
-    <section id="page-scan" style="display:none;">
-        <div class="card" style="text-align: center;">
-            <h2><i class="fas fa-camera"></i> Validation de Sortie de Stock</h2>
-            <p style="margin-bottom: 20px;">Sélectionnez une commande et scannez l'article pour confirmer la sortie de stock.</p>
-            
-            <select id="scan-order-choice" style="max-width: 400px; margin-bottom: 20px;">
-                <option value="">-- Choisir une commande en attente --</option>
-            </select>
-            <br>
-            <button class="btn btn-primary" onclick="toggleScanner()" id="btn-scan-action">
-                <i class="fas fa-video"></i> Allumer la Caméra
-            </button>
-
-            <div id="cam-box"><canvas id="preview"></canvas></div>
-            <div id="scan-msg" style="margin-top: 15px; font-weight: bold; font-size: 1.2rem;"></div>
+        <div class="form-group">
+          <button class="btn btn-primary" style="width:100%" onclick="addArticle()">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
         </div>
-    </section>
-
-    <div class="card history-card">
-        <h2><i class="fas fa-terminal"></i> Journal des Mouvements (Historique)</h2>
-        <div id="log-container"></div>
+      </div>
     </div>
+
+    <div class="card">
+      <h2 class="card-title"><i class="fas fa-list"></i> Inventaire</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>Article</th><th>SKU</th><th>Quantité</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="stock-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-orders" style="display:none">
+    <div class="card">
+      <h2 class="card-title"><i class="fas fa-cart-plus"></i> Nouvelle Commande</h2>
+      <div class="form-group">
+        <label>Client</label>
+        <input type="text" id="scan-client" placeholder="Nom du client"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:0.5rem;align-items:end;margin-bottom:1rem">
+        <div class="form-group">
+          <label>Article</label>
+          <select id="order-art-select"></select>
+        </div>
+        <div class="form-group">
+          <label>Qté</label>
+          <input type="number" id="order-art-qty" value="1" style="width:80px"/>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-outline" onclick="addItemToOrder()">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div id="current-order-items" style="margin-bottom:1.5rem"></div>
+      <button class="btn btn-primary" onclick="saveOrder()">
+        <i class="fas fa-check"></i> Créer la commande
+      </button>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title"><i class="fas fa-history"></i> Commandes en cours</h2>
+      <div id="orders-list"></div>
+    </div>
+  </section>
+
+  <section id="page-scanner" style="display:none">
+    <div class="card" style="text-align:center">
+      <h2 class="card-title"><i class="fas fa-qrcode"></i> Validation par Scan</h2>
+      <p style="color:var(--neutral);margin-bottom:1.5rem">Scannez un article pour valider une commande ou identifier un produit.</p>
+      
+      <div id="video-container">
+        <div class="scan-overlay"></div>
+        <video id="video" playsinline></video>
+      </div>
+
+      <div style="margin-top:1.5rem;display:flex;justify-content:center;gap:1rem">
+        <button class="btn btn-primary" id="btn-start-scan" onclick="startScan()">
+          <i class="fas fa-play"></i> Démarrer
+        </button>
+        <button class="btn btn-outline" onclick="stopScan()">
+          <i class="fas fa-stop"></i> Arrêter
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-labels" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <h2 class="card-title" style="margin-bottom:0"><i class="fas fa-print"></i> Étiquettes</h2>
+        <button class="btn btn-outline" onclick="printAllQR()">
+          <i class="fas fa-file-pdf"></i> Tout imprimer (PDF)
+        </button>
+      </div>
+      <div id="qr-list" class="qr-grid"></div>
+    </div>
+  </section>
 </div>
 
 <div id="toast"></div>
 
 <script>
-    // --- DONNÉES ---
-    let articles = JSON.parse(localStorage.getItem('aid_articles')) || [];
-    let orders = JSON.parse(localStorage.getItem('aid_orders')) || [];
-    let logs = JSON.parse(localStorage.getItem('aid_logs')) || [];
-    let tempItems = [];
+// --- LOGIQUE CORE ---
+let articles = JSON.parse(localStorage.getItem('wms_articles')) || [];
+let currentOrderItems = [];
+let scanning = false;
+let videoStream = null;
 
-    // --- NAVIGATION ---
-    function showPage(id) {
-        document.querySelectorAll('section').forEach(s => s.style.display = 'none');
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-' + id).style.display = 'block';
-        document.getElementById('nav-' + id).classList.add('active');
-        
-        stopScanner();
-        if(id === 'stock') renderStock();
-        if(id === 'labels') renderLabels();
-        if(id === 'orders') { renderSelects(); renderOrders(); }
-        if(id === 'scan') populateScanSelect();
-        renderLogs();
+function saveArticles() { localStorage.setItem('wms_articles', JSON.stringify(articles)); }
+function getOrders() { return JSON.parse(localStorage.getItem('wms_orders')) || []; }
+function setOrders(o) { localStorage.setItem('wms_orders', JSON.stringify(o)); }
+
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.style.borderLeft = `4px solid ${type==='success'?'#16a34a':type==='error'?'#dc2626':'#f97316'}`;
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// --- NAVIGATION ---
+function setPage(page) {
+  document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).style.display = 'block';
+  document.getElementById('nav-' + page).classList.add('active');
+  stopScan();
+  if(page === 'stock') renderStock();
+  if(page === 'orders') { renderOrders(); updateOrderSelect(); }
+  if(page === 'labels') renderQRList();
+}
+
+// --- GESTION STOCK ---
+function addArticle() {
+  const name = document.getElementById('art-name').value.trim();
+  const sku = document.getElementById('art-sku').value.trim();
+  const qty = parseInt(document.getElementById('art-qty').value);
+  if(!name || !sku) return toast("Champs requis", "error");
+  articles.push({ id: Date.now(), name, sku, qty });
+  saveArticles();
+  renderStock();
+  toast("Article ajouté", "success");
+}
+
+function renderStock() {
+  const list = document.getElementById('stock-list');
+  list.innerHTML = articles.map(a => `
+    <tr>
+      <td><strong>${a.name}</strong></td>
+      <td><code style="background:#f1f5f9;padding:0.2rem 0.4rem;border-radius:0.25rem">${a.sku}</code></td>
+      <td>${a.qty}</td>
+      <td>
+        <button class="btn-outline" onclick="deleteArticle(${a.id})" style="padding:0.4rem"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function deleteArticle(id) {
+  articles = articles.filter(a => a.id !== id);
+  saveArticles();
+  renderStock();
+}
+
+// --- GESTION COMMANDES ---
+function updateOrderSelect() {
+  const select = document.getElementById('order-art-select');
+  select.innerHTML = articles.map(a => `<option value="${a.sku}">${a.name} (${a.sku})</option>`).join('');
+}
+
+function addItemToOrder() {
+  const sku = document.getElementById('order-art-select').value;
+  const qty = parseInt(document.getElementById('order-art-qty').value);
+  const art = articles.find(a => a.sku === sku);
+  currentOrderItems.push({ ...art, qty });
+  renderCurrentOrderItems();
+}
+
+function renderCurrentOrderItems() {
+  const div = document.getElementById('current-order-items');
+  div.innerHTML = currentOrderItems.map((item, idx) => `
+    <div style="display:flex;justify-content:space-between;padding:0.5rem;background:#f8fafc;margin-bottom:0.25rem;border-radius:0.5rem">
+      <span>${item.name} x ${item.qty}</span>
+      <button onclick="currentOrderItems.splice(${idx},1);renderCurrentOrderItems()">×</button>
+    </div>
+  `).join('');
+}
+
+function saveOrder() {
+  if (!currentOrderItems.length) return toast("Commande vide", "error");
+  const client = document.getElementById('scan-client').value.trim();
+  
+  const order = {
+    id: 'ORD' + Date.now(),
+    date: new Date().toLocaleString(),
+    client: client || "Anonyme",
+    items: [...currentOrderItems],
+    status: "En préparation" // MODIFICATION : Statut initial demandé
+  };
+
+  const orders = getOrders();
+  orders.push(order);
+  setOrders(orders);
+  currentOrderItems = [];
+  renderCurrentOrderItems();
+  renderOrders();
+  toast("Commande créée : En préparation", "success");
+}
+
+function renderOrders() {
+  const list = document.getElementById('orders-list');
+  const orders = getOrders();
+  list.innerHTML = orders.map(o => `
+    <div class="card" style="border-left: 4px solid ${o.status==='Validée'?'var(--success)':'var(--warning)'}">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <strong>${o.client}</strong> <span class="badge ${o.status==='Validée'?'badge-success':'badge-warning'}">${o.status}</span><br/>
+          <small style="color:var(--neutral)">${o.id} - ${o.date}</small>
+        </div>
+        ${o.status === "En préparation" ? `<button class="btn btn-primary" onclick="prepareForScan('${o.id}')"><i class="fas fa-barcode"></i> Scanner pour valider</button>` : ''}
+      </div>
+      <div style="margin-top:1rem;font-size:0.875rem">
+        ${o.items.map(i => `• ${i.name} (x${i.qty})`).join('<br/>')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// --- LOGIQUE SCAN ET VALIDATION ---
+let orderToValidate = null;
+
+function prepareForScan(orderId) {
+  orderToValidate = orderId;
+  setPage('scanner');
+  toast("Scannez un article de la commande " + orderId);
+}
+
+function startScan() {
+  const video = document.getElementById('video');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
+    videoStream = stream;
+    video.srcObject = stream;
+    video.play();
+    scanning = true;
+    requestAnimationFrame(scanTick);
+  });
+}
+
+function stopScan() {
+  scanning = false;
+  if(videoStream) videoStream.getTracks().forEach(t => t.stop());
+  videoStream = null;
+}
+
+function scanTick() {
+  if(!scanning) return;
+  const video = document.getElementById('video');
+  if(video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height);
+    
+    if(code) {
+      handleScanResult(code.data);
+      stopScan();
+      return;
     }
+  }
+  requestAnimationFrame(scanTick);
+}
 
-    // --- FONCTIONS STOCK ---
-    function addStock() {
-        const sku = document.getElementById('in-sku').value.toUpperCase().trim();
-        const name = document.getElementById('in-name').value.trim();
-        const qty = parseInt(document.getElementById('in-qty').value);
+function handleScanResult(scannedSku) {
+  if(!orderToValidate) {
+    const art = articles.find(a => a.sku === scannedSku);
+    return alert(art ? `Article trouvé : ${art.name}` : `Code inconnu : ${scannedSku}`);
+  }
 
-        if(!sku || !name || isNaN(qty)) return notify("Champs manquants !", "danger");
-
-        articles.push({ sku, name, qty });
-        addLog(`Entrée Stock : ${name} (${sku}) - Qté: ${qty}`, "success");
-        save(); renderStock();
-        notify("Article ajouté !", "success");
+  const orders = getOrders();
+  const orderIdx = orders.findIndex(o => o.id === orderToValidate);
+  const order = orders[orderIdx];
+  
+  // Vérification : est-ce que le code scanné est dans la commande ?
+  const itemInOrder = order.items.find(i => i.sku === scannedSku);
+  
+  if(itemInOrder) {
+    // Vérification du stock réel
+    const stockArt = articles.find(a => a.sku === scannedSku);
+    if(stockArt && stockArt.qty >= itemInOrder.qty) {
+      stockArt.qty -= itemInOrder.qty;
+      order.status = "Validée";
+      saveArticles();
+      setOrders(orders);
+      toast("Commande validée par scan !", "success");
+      orderToValidate = null;
+      setPage('orders');
+    } else {
+      alert(`RUPTURE DE STOCK ! Impossible de valider la commande. Manque : ${itemInOrder.name}`);
     }
+  } else {
+    alert("Cet article ne fait pas partie de cette commande !");
+  }
+}
 
-    function renderStock() {
-        const b = document.getElementById('stock-body');
-        b.innerHTML = '';
-        articles.forEach((a, i) => {
-            b.innerHTML += `<tr>
-                <td><b>${a.sku}</b></td><td>${a.name}</td><td>${a.qty}</td>
-                <td><button onclick="delArt(${i})" style="color:red; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
-            </tr>`;
-        });
-    }
+// --- ETIQUETTES ---
+function renderQRList() {
+  const grid = document.getElementById('qr-list');
+  grid.innerHTML = '';
+  articles.forEach(art => {
+    const container = document.createElement('div');
+    container.className = 'qr-item';
+    container.innerHTML = `
+      <div style="font-weight:700;margin-bottom:0.5rem">${art.name}</div>
+      <div id="qr-${art.id}" class="qr-canvas-container"></div>
+      <div style="margin:10px 0"><svg id="bc-${art.id}"></svg></div>
+      <div style="color:var(--neutral);font-size:0.75rem">${art.sku}</div>
+    `;
+    grid.appendChild(container);
 
-    function delArt(i) { articles.splice(i,1); save(); renderStock(); }
+    // Rendu QR
+    new QRCode(document.getElementById(`qr-${art.id}`), {
+      text: art.sku, width: 120, height: 120
+    });
+    // Rendu Barcode
+    JsBarcode(`#bc-${art.id}`, art.sku, { height: 40, width: 1.5, fontSize: 12 });
+  });
+}
 
-    // --- ETIQUETTES ---
-    function renderLabels() {
-        const container = document.getElementById('label-container');
-        container.innerHTML = '';
-        articles.forEach(a => {
-            const div = document.createElement('div');
-            div.className = 'label-box';
-            div.innerHTML = `<strong>${a.name}</strong><br><svg id="bcode-${a.sku}"></svg><div id="qcode-${a.sku}" style="display:flex; justify-content:center; margin-top:5px"></div><small>${a.sku}</small>`;
-            container.appendChild(div);
-            JsBarcode(`#bcode-${a.sku}`, a.sku, { height: 40, width: 1.5 });
-            new QRCode(document.getElementById(`qcode-${a.sku}`), { text: a.sku, width: 70, height: 70 });
-        });
-    }
+function printAllQR() {
+  window.print();
+}
 
-    // --- COMMANDES ---
-    function renderSelects() {
-        const s = document.getElementById('order-select-item');
-        s.innerHTML = '<option value="">Article...</option>';
-        articles.forEach(a => s.innerHTML += `<option value="${a.sku}">${a.name}</option>`);
-    }
-
-    function addToOrderTemp() {
-        const sku = document.getElementById('order-select-item').value;
-        const qty = parseInt(document.getElementById('order-qty').value);
-        if(!sku || isNaN(qty)) return;
-        const art = articles.find(a => a.sku === sku);
-        tempItems.push({ sku, name: art.name, qty });
-        document.getElementById('order-list-tmp').innerHTML = tempItems.map(i => `• ${i.name} (x${i.qty})`).join('<br>');
-        document.getElementById('btn-create-order').style.display = 'block';
-    }
-
-    function createFinalOrder() {
-        const o = {
-            id: 'CMD-' + Math.floor(Math.random()*9000),
-            client: document.getElementById('order-client').value || "Inconnu",
-            items: [...tempItems],
-            status: 'En préparation'
-        };
-        orders.push(o);
-        addLog(`Nouvelle commande ${o.id} - Statut : En préparation`, "warning");
-        tempItems = [];
-        document.getElementById('order-list-tmp').innerHTML = '<i>Aucun article...</i>';
-        document.getElementById('btn-create-order').style.display = 'none';
-        save(); renderOrders();
-        notify("Commande créée !", "success");
-    }
-
-    function renderOrders() {
-        const b = document.getElementById('orders-body');
-        b.innerHTML = '';
-        orders.slice().reverse().forEach(o => {
-            const cls = o.status === 'Validée' ? 'status-success' : 'status-pending';
-            b.innerHTML += `<tr><td>${o.id}</td><td>${o.client}</td><td><span class="status ${cls}">${o.status}</span></td><td><small>${o.items.map(i=>i.name).join(', ')}</small></td></tr>`;
-        });
-    }
-
-    // --- SCANNER ---
-    let stream = null;
-    function populateScanSelect() {
-        const s = document.getElementById('scan-order-choice');
-        s.innerHTML = '<option value="">-- Choisir une commande --</option>';
-        orders.filter(o => o.status === 'En préparation').forEach(o => s.innerHTML += `<option value="${o.id}">${o.id} - ${o.client}</option>`);
-    }
-
-    function toggleScanner() {
-        if(stream) { stopScanner(); return; }
-        document.getElementById('cam-box').style.display = 'block';
-        const video = document.createElement("video");
-        const canvas = document.getElementById("preview");
-        const ctx = canvas.getContext("2d");
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
-            stream = s; video.srcObject = s; video.setAttribute("playsinline", true); video.play();
-            requestAnimationFrame(function loop() {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.height = video.videoHeight; canvas.width = video.videoWidth;
-                    ctx.drawImage(video, 0, 0);
-                    const code = jsQR(ctx.getImageData(0,0,canvas.width,canvas.height).data, canvas.width, canvas.height);
-                    if(code) { validateAction(code.data); stopScanner(); }
-                }
-                if(stream) requestAnimationFrame(loop);
-            });
-        });
-    }
-
-    function stopScanner() {
-        if(stream) stream.getTracks().forEach(t => t.stop());
-        stream = null; document.getElementById('cam-box').style.display = 'none';
-    }
-
-    function validateAction(sku) {
-        const orderId = document.getElementById('scan-order-choice').value;
-        if(!orderId) return notify("Sélectionnez une commande !", "danger");
-        
-        const order = orders.find(o => o.id === orderId);
-        const item = order.items.find(i => i.sku === sku);
-        if(!item) return alert("Cet article ne fait pas partie de la commande !");
-
-        const stock = articles.find(a => a.sku === sku);
-        if(stock.qty < item.qty) {
-            addLog(`RUPTURE : Stock insuffisant pour ${sku} sur ${orderId}`, "danger");
-            return alert("ERREUR : Stock insuffisant ! Impossible de valider.");
-        }
-
-        stock.qty -= item.qty;
-        order.status = 'Validée';
-        addLog(`Validation SCAN : Commande ${orderId} expédiée.`, "success");
-        save();
-        document.getElementById('scan-msg').innerHTML = `<span style="color:green">Validé ! Commande terminée.</span>`;
-        notify("Sortie de stock validée", "success");
-    }
-
-    // --- LOGS ---
-    function addLog(msg, type) {
-        logs.unshift({ time: new Date().toLocaleTimeString(), msg, type });
-        if(logs.length > 15) logs.pop();
-        save(); renderLogs();
-    }
-
-    function renderLogs() {
-        const c = document.getElementById('log-container');
-        c.innerHTML = logs.length ? '' : '<i>Aucun historique...</i>';
-        logs.forEach(l => {
-            let col = l.type === 'success' ? '#4ade80' : (l.type === 'warning' ? '#fbbf24' : '#f87171');
-            c.innerHTML += `<div class="log-line"><span><span class="log-time">[${l.time}]</span> <span style="color:${col}">${l.msg}</span></span></div>`;
-        });
-    }
-
-    function save() {
-        localStorage.setItem('aid_articles', JSON.stringify(articles));
-        localStorage.setItem('aid_orders', JSON.stringify(orders));
-        localStorage.setItem('aid_logs', JSON.stringify(logs));
-    }
-
-    function notify(m, t) {
-        const toast = document.getElementById('toast');
-        toast.textContent = m; toast.style.background = t === 'success' ? 'var(--success)' : 'var(--danger)';
-        toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 3000);
-    }
-
-    // Init
-    renderStock();
-    renderLogs();
+// Initialisation
+renderStock();
 </script>
 </body>
 </html>
