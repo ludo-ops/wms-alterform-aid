@@ -306,7 +306,7 @@ body.night-mode .btn-recep{background:linear-gradient(135deg,#22c55e,#16a34a);bo
     <div class="form-actions"><button class="btn-recep" onclick="validateReception()"><i class="fa fa-truck-ramp-box"></i> Valider la réception <i class="fa fa-circle-check"></i></button></div>
   </div>
 </section>
-<table class="table-wrap"><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Articles</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="orders-tbody"></tbody></table>
+<table class="table-wrap"><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Articles</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="orders-tbody"></tbody>
 <section class="page" id="page-scanner">
   <div class="topbar"><h1><i class="fa fa-qrcode"></i> Scanner QR Code</h1></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start" id="scanner-layout">
@@ -441,7 +441,7 @@ function uuid(){return Date.now().toString(36)+Math.random().toString(36).slice(
 function fmtDate(d){return new Date(d).toLocaleDateString('fr-BE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
 function toast(msg,type='success'){const icons={success:'fa-circle-check',error:'fa-circle-xmark',warning:'fa-triangle-exclamation',info:'fa-circle-info'};const el=document.createElement('div');el.className=`toast toast-${type}`;el.innerHTML=`<i class="fa ${icons[type]||icons.info}"></i>${msg}`;document.getElementById('toast-container').appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400)},2800)}
 let currentPage='dashboard';
-function navigate(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const labels={dashboard:'tableau',stock:'stocks',reception:'réception',orders:'commandes',scanner:'scanner',qrcodes:'qr',history:'historique'};document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(labels[page]||page))n.classList.add('active')});currentPage=page;if(page==='dashboard')renderDashboard();if(page==='stock')renderStockTable();if(page==='reception')populateReceptionSelect();if(page==='orders')renderOrdersTable();if(page==='qrcodes')renderQRGrid();if(page==='history')renderHistoryTable();if(page==='scanner'){populateScannerOrder();stopCamera();}document.getElementById('sidebar').classList.remove('open')}
+function navigate(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));const labels={dashboard:'tableau',stock:'stocks',reception:'réception',orders:'commandes',scanner:'scanner',qrcodes:'qr',history:'historique'};document.querySelectorAll('.nav-item').forEach(n=>{if(n.textContent.toLowerCase().includes(labels[page]||page))n.classList.add('active')});currentPage=page;if(page==='dashboard')renderDashboard();if(page==='stock')renderStockTable();if(page==='reception')populateReceptionSelect();if(page==='orders')renderOrdersTable();function showPageOrders(){renderOrdersTable();}if(page==='qrcodes')renderQRGrid();if(page==='history')renderHistoryTable();if(page==='scanner'){populateScannerOrder();stopCamera();}document.getElementById('sidebar').classList.remove('open')}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -484,6 +484,7 @@ function renderOrdersTable(){
       </tr>`;
   }).join('');
 }
+  function showPageOrders(){renderOrdersTable();}
 
 function cancelOrder(id){
   const orders = getOrders();
