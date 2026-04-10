@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion de Stock & Logistique - Simulateur</title>
+    <title>WMS Simulator - Formation Logistique</title>
     
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -14,82 +14,136 @@
         :root {
             --primary: #f97316;
             --primary-dark: #ea580c;
+            --primary-light: #fff7ed;
             --bg: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
+            --border: #e2e8f0;
             --success: #16a34a;
             --danger: #dc2626;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 50px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--text); line-height: 1.5; }
 
-        header { background: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
-        nav { display: flex; justify-content: center; background: white; border-bottom: 1px solid #e2e8f0; sticky: top; }
-        nav button { padding: 1rem; border: none; background: none; cursor: pointer; font-weight: 600; color: #64748b; }
-        nav button.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
-
-        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: var(--card); padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        /* Header & Nav */
+        header { 
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+            color: white; padding: 1.5rem; text-align: center; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
         
-        h2 { margin-bottom: 1rem; border-left: 4px solid var(--primary); padding-left: 10px; }
+        nav { 
+            display: flex; justify-content: center; gap: 10px; 
+            background: white; padding: 0.75rem; border-bottom: 1px solid var(--border);
+            sticky: top; z-index: 100;
+        }
+        nav button { 
+            padding: 0.6rem 1.2rem; border: 1px solid transparent; background: none; 
+            cursor: pointer; font-weight: 600; color: #64748b; border-radius: 8px;
+            transition: all 0.3s;
+        }
+        nav button.active { 
+            background: var(--primary-light); color: var(--primary); border-color: var(--primary); 
+        }
 
-        /* Formulaires et Tableaux */
-        input, select, button.btn { padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 4px; margin-right: 0.5rem; }
-        button.btn-primary { background: var(--primary); color: white; border: none; cursor: pointer; }
-        button.btn-primary:hover { background: var(--primary-dark); }
+        .container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        table th, table td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; }
-        
-        /* Étiquettes Codes */
-        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-        .label-card { border: 2px dashed #ccc; padding: 1rem; text-align: center; background: white; }
-        .label-card canvas, .label-card svg { max-width: 100%; height: auto; }
+        .card { 
+            background: var(--card); padding: 1.5rem; border-radius: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border);
+            margin-bottom: 1.5rem; 
+        }
+
+        h2 { margin-bottom: 1.2rem; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; color: var(--primary-dark); }
+
+        /* Formulaires */
+        .form-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1rem; }
+        input, select { 
+            padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; 
+            outline: none; transition: border 0.2s; flex: 1; min-width: 150px;
+        }
+        input:focus { border-color: var(--primary); }
+        .btn { 
+            padding: 0.6rem 1.2rem; border-radius: 6px; border: none; 
+            font-weight: 600; cursor: pointer; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        /* Tableaux */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f1f5f9; padding: 0.75rem; text-align: left; font-size: 0.85rem; color: #64748b; }
+        td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+
+        /* Status Badges */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .badge-prep { background: #fef3c7; color: #92400e; }
+        .badge-done { background: #dcfce7; color: #166534; }
+
+        /* QR Codes Grid */
+        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
+        .label-item { 
+            border: 1px solid var(--border); padding: 1rem; border-radius: 8px; 
+            text-align: center; background: white; transition: transform 0.2s;
+        }
+        .label-item:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .label-item svg, .label-item canvas { max-width: 100%; margin: 10px 0; }
 
         /* Scanner */
-        #video-container { width: 100%; max-width: 400px; margin: 1rem auto; position: relative; display: none; border: 4px solid var(--primary); }
-        canvas#preview { width: 100%; }
+        #video-container { 
+            width: 100%; max-width: 450px; margin: 1rem auto; overflow: hidden;
+            border-radius: 12px; border: 4px solid var(--primary); display: none;
+        }
+        canvas#preview { width: 100%; background: #000; }
 
-        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-        .status-prep { background: #fef3c7; color: #92400e; }
-        .status-valide { background: #dcfce7; color: #166534; }
+        /* Historique Journal */
+        .history-section { margin-top: 2rem; border-top: 2px solid var(--border); padding-top: 1rem; }
+        .log-entry { 
+            padding: 0.5rem; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; 
+            display: flex; justify-content: space-between; 
+        }
+        .log-time { color: #94a3b8; font-family: monospace; }
 
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 1rem; border-radius: 8px; color: white; display: none; z-index: 1000; animation: slideIn 0.3s; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        /* Toast notifications */
+        #toast { 
+            position: fixed; bottom: 20px; right: 20px; padding: 1rem 2rem; 
+            border-radius: 8px; color: white; display: none; z-index: 1000; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); font-weight: 600;
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h1><i class="fas fa-boxes"></i> WMS Simulator - Formation Cariste</h1>
+    <h1><i class="fas fa-warehouse"></i> Système WMS - Gestion de Stock</h1>
 </header>
 
 <nav>
-    <button onclick="showPage('stock')" id="btn-stock" class="active">Stock</button>
-    <button onclick="showPage('labels')" id="btn-labels">Étiquettes</button>
-    <button onclick="showPage('orders')" id="btn-orders">Commandes</button>
-    <button onclick="showPage('scan')" id="btn-scan">Validation Scan</button>
+    <button onclick="showPage('stock')" id="nav-stock" class="active"><i class="fas fa-boxes"></i> Stock</button>
+    <button onclick="showPage('labels')" id="nav-labels"><i class="fas fa-barcode"></i> Étiquettes</button>
+    <button onclick="showPage('orders')" id="nav-orders"><i class="fas fa-shopping-cart"></i> Commandes</button>
+    <button onclick="showPage('scan')" id="nav-scan"><i class="fas fa-qrcode"></i> Validation Scan</button>
 </nav>
 
 <div class="container">
     
     <section id="page-stock">
         <div class="card">
-            <h2>Ajouter un Article</h2>
-            <input type="text" id="art-sku" placeholder="SKU (ex: ART01)">
-            <input type="text" id="art-name" placeholder="Nom de l'article">
-            <input type="number" id="art-qty" placeholder="Quantité">
-            <button class="btn btn-primary" onclick="addArticle()">Ajouter</button>
+            <h2><i class="fas fa-plus-circle"></i> Entrée de Stock</h2>
+            <div class="form-group">
+                <input type="text" id="art-sku" placeholder="SKU Article (ex: REF-100)">
+                <input type="text" id="art-name" placeholder="Désignation">
+                <input type="number" id="art-qty" placeholder="Quantité">
+                <button class="btn btn-primary" onclick="addArticle()">Ajouter au stock</button>
+            </div>
         </div>
         <div class="card">
-            <h2>Inventaire actuel</h2>
+            <h2><i class="fas fa-list"></i> Inventaire en temps réel</h2>
             <table id="stock-table">
                 <thead>
-                    <tr>
-                        <th>SKU</th><th>Nom</th><th>Quantité</th><th>Action</th>
-                    </tr>
+                    <tr><th>SKU</th><th>Désignation</th><th>Stock</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="stock-body"></tbody>
             </table>
@@ -98,32 +152,33 @@
 
     <section id="page-labels" style="display:none;">
         <div class="card">
-            <h2>Générer les codes de scan</h2>
-            <button class="btn btn-primary" onclick="renderLabels()">Actualiser les codes</button>
-            <div id="qr-grid" class="qr-grid" style="margin-top:1.5rem;"></div>
+            <h2><i class="fas fa-print"></i> Génération des Codes de Traçabilité</h2>
+            <div id="qr-grid" class="qr-grid"></div>
         </div>
     </section>
 
     <section id="page-orders" style="display:none;">
         <div class="card">
-            <h2>Nouvelle Commande Client</h2>
-            <div style="margin-bottom:1rem;">
+            <h2><i class="fas fa-cart-plus"></i> Nouvelle Commande Client</h2>
+            <div class="form-group">
                 <input type="text" id="order-client" placeholder="Nom du Client">
                 <select id="order-item-select"></select>
-                <input type="number" id="order-item-qty" placeholder="Qté" style="width:70px;">
-                <button class="btn btn-primary" onclick="addToOrder()">Ajouter</button>
+                <input type="number" id="order-item-qty" placeholder="Qté" style="max-width:80px">
+                <button class="btn btn-primary" onclick="addItemToOrder()">Ajouter</button>
             </div>
-            <ul id="current-order-list" style="margin-bottom:1rem; list-style: none;"></ul>
-            <button class="btn btn-primary" onclick="finalizeOrder()" id="btn-finalize" style="display:none;">Créer la commande (En préparation)</button>
+            <div id="order-preview-list" style="margin: 1rem 0; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                <p style="color: #64748b; font-style: italic;">Aucun article ajouté à la commande.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-save-order" style="display:none;" onclick="saveOrder()">
+                <i class="fas fa-check"></i> Créer la commande (Statut : En préparation)
+            </button>
         </div>
 
         <div class="card">
-            <h2>Liste des commandes</h2>
+            <h2><i class="fas fa-history"></i> Suivi des Commandes</h2>
             <table id="orders-table">
                 <thead>
-                    <tr>
-                        <th>ID</th><th>Client</th><th>Status</th><th>Action</th>
-                    </tr>
+                    <tr><th>ID</th><th>Client</th><th>Date</th><th>Statut</th></tr>
                 </thead>
                 <tbody id="orders-body"></tbody>
             </table>
@@ -132,80 +187,104 @@
 
     <section id="page-scan" style="display:none;">
         <div class="card" style="text-align: center;">
-            <h2>Validation par Scan</h2>
-            <p>Sélectionnez une commande et scannez le produit pour valider la sortie.</p>
+            <h2><i class="fas fa-camera"></i> Validation de Sortie de Stock</h2>
+            <p>1. Choisissez une commande "En préparation" <br> 2. Scannez l'article pour valider l'envoi.</p>
             
-            <div id="select-order-to-scan" style="margin: 1rem 0;">
-                <select id="scan-order-id" onchange="updateScanPreview()"></select>
+            <div style="margin: 1.5rem 0;">
+                <select id="scan-order-select" style="max-width: 300px; padding: 10px; font-size: 1rem;">
+                    <option value="">-- Sélectionner une commande --</option>
+                </select>
             </div>
 
-            <button class="btn btn-primary" onclick="startScanner()" id="btn-start-scan">
-                <i class="fas fa-camera"></i> Ouvrir Caméra
+            <button class="btn btn-primary" id="btn-open-cam" onclick="startScanner()">
+                <i class="fas fa-video"></i> Activer le Scanner
             </button>
 
             <div id="video-container">
                 <canvas id="preview"></canvas>
             </div>
-            
-            <div id="scan-feedback" style="margin-top: 1rem; font-weight: bold; font-size: 1.2rem;"></div>
+            <div id="scan-result" style="margin-top: 1rem; font-weight: bold; font-size: 1.1rem;"></div>
         </div>
     </section>
+
+    <div class="card history-section">
+        <h3><i class="fas fa-clipboard-list"></i> Journal d'activité (Historique)</h3>
+        <div id="global-logs">
+            <p style="color: #94a3b8;">Aucun événement enregistré.</p>
+        </div>
+    </div>
 </div>
 
-<div id="toast" class="toast"></div>
+<div id="toast"></div>
 
 <script>
-    // --- DATA ---
-    let articles = JSON.parse(localStorage.getItem('wms_articles')) || [];
-    let orders = JSON.parse(localStorage.getItem('wms_orders')) || [];
-    let currentNewOrderItems = [];
+    // --- INITIALISATION DES DONNÉES ---
+    let articles = JSON.parse(localStorage.getItem('wms_v2_articles')) || [];
+    let orders = JSON.parse(localStorage.getItem('wms_v2_orders')) || [];
+    let logs = JSON.parse(localStorage.getItem('wms_v2_logs')) || [];
+    let tempOrderItems = [];
 
     // --- NAVIGATION ---
-    function showPage(pageId) {
+    function showPage(id) {
         document.querySelectorAll('section').forEach(s => s.style.display = 'none');
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-' + pageId).style.display = 'block';
-        document.getElementById('btn-' + pageId).classList.add('active');
+        document.getElementById('page-' + id).style.display = 'block';
+        document.getElementById('nav-' + id).classList.add('active');
         
-        if(pageId === 'stock') renderStock();
-        if(pageId === 'labels') renderLabels();
-        if(pageId === 'orders') { renderOrderSelect(); renderOrdersList(); }
-        if(pageId === 'scan') { populateScanOrderSelect(); stopScanner(); }
+        stopScanner(); // Ferme la caméra si on change de page
+        if(id === 'stock') renderStock();
+        if(id === 'labels') renderLabels();
+        if(id === 'orders') { renderOrderSelect(); renderOrdersList(); }
+        if(id === 'scan') populateScanOrderSelect();
+        renderLogs();
     }
 
-    // --- STOCK ---
+    // --- GESTION DU STOCK ---
     function addArticle() {
-        const sku = document.getElementById('art-sku').value.toUpperCase();
-        const name = document.getElementById('art-name').value;
+        const sku = document.getElementById('art-sku').value.toUpperCase().trim();
+        const name = document.getElementById('art-name').value.trim();
         const qty = parseInt(document.getElementById('art-qty').value);
 
-        if(!sku || !name || isNaN(qty)) return toast("Remplissez tous les champs", "danger");
+        if(!sku || !name || isNaN(qty)) return showToast("Veuillez remplir tous les champs", "danger");
         
-        articles.push({ sku, name, qty });
-        save();
-        renderStock();
-        toast("Article ajouté", "success");
+        const existing = articles.find(a => a.sku === sku);
+        if(existing) {
+            existing.qty += qty;
+            addLog(`Réapprovisionnement : ${name} (+${qty})`, "success");
+        } else {
+            articles.push({ sku, name, qty });
+            addLog(`Nouvel article créé : ${name} (${sku})`, "success");
+        }
+        
+        saveAndRefresh();
+        showToast("Stock mis à jour", "success");
+        document.getElementById('art-sku').value = '';
+        document.getElementById('art-name').value = '';
+        document.getElementById('art-qty').value = '';
     }
 
     function renderStock() {
         const body = document.getElementById('stock-body');
         body.innerHTML = '';
-        articles.forEach((art, index) => {
+        articles.forEach((art, idx) => {
             body.innerHTML += `<tr>
-                <td>${art.sku}</td>
+                <td><strong>${art.sku}</strong></td>
                 <td>${art.name}</td>
-                <td><b>${art.qty}</b></td>
-                <td><button onclick="deleteArticle(${index})" style="color:red; border:none; background:none; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
+                <td><b style="color:${art.qty < 5 ? 'red' : 'inherit'}">${art.qty}</b></td>
+                <td><button onclick="deleteArticle(${idx})" class="btn" style="color:var(--danger)"><i class="fas fa-trash"></i></button></td>
             </tr>`;
         });
     }
 
-    function deleteArticle(index) {
-        articles.splice(index, 1);
-        save(); renderStock();
+    function deleteArticle(idx) {
+        if(confirm("Supprimer cet article ?")) {
+            addLog(`Article supprimé : ${articles[idx].name}`, "danger");
+            articles.splice(idx, 1);
+            saveAndRefresh();
+        }
     }
 
-    // --- ETIQUETTES (QR & BARCODES) ---
+    // --- GESTION DES ETIQUETTES (QR & BARCODES) ---
     function renderLabels() {
         const grid = document.getElementById('qr-grid');
         grid.innerHTML = '';
@@ -213,88 +292,92 @@
 
         articles.forEach(art => {
             const div = document.createElement('div');
-            div.className = 'label-card';
+            div.className = 'label-item';
             div.innerHTML = `
-                <p><strong>${art.name}</strong></p>
+                <div style="font-weight:bold; font-size:0.9rem; margin-bottom:5px;">${art.name}</div>
                 <svg id="bc-${art.sku}"></svg>
-                <div id="qr-${art.sku}" style="display:flex; justify-content:center; margin: 10px 0;"></div>
-                <p><small>${art.sku}</small></p>
+                <div id="qr-${art.sku}" style="display:flex; justify-content:center; margin:8px 0;"></div>
+                <div style="font-size:0.7rem; color:#64748b;">SKU: ${art.sku}</div>
             `;
             grid.appendChild(div);
 
-            // Générer Barcode
-            JsBarcode(`#bc-${art.sku}`, art.sku, { height: 40, width: 1.5, fontSize: 12 });
+            // Génération Barcode
+            JsBarcode(`#bc-${art.sku}`, art.sku, { height: 40, width: 1.5, fontSize: 10 });
             
-            // Générer QR Code
+            // Génération QR Code
             new QRCode(document.getElementById(`qr-${art.sku}`), {
-                text: art.sku,
-                width: 80,
-                height: 80
+                text: art.sku, width: 80, height: 80
             });
         });
     }
 
-    // --- COMMANDES ---
+    // --- GESTION DES COMMANDES ---
     function renderOrderSelect() {
         const sel = document.getElementById('order-item-select');
-        sel.innerHTML = '<option value="">Choisir article...</option>';
-        articles.forEach(a => {
-            sel.innerHTML += `<option value="${a.sku}">${a.name} (${a.sku})</option>`;
+        sel.innerHTML = '<option value="">Choisir l\'article...</option>';
+        articles.forEach(a => sel.innerHTML += `<option value="${a.sku}">${a.name} (${a.sku})</option>`);
+    }
+
+    function addItemToOrder() {
+        const sku = document.getElementById('order-item-select').value;
+        const qty = parseInt(document.getElementById('order-item-qty').value);
+        if(!sku || isNaN(qty) || qty <= 0) return;
+
+        const art = articles.find(a => a.sku === sku);
+        tempOrderItems.push({ sku, name: art.name, qty });
+        
+        updateOrderPreview();
+        document.getElementById('btn-save-order').style.display = 'inline-flex';
+    }
+
+    function updateOrderPreview() {
+        const container = document.getElementById('order-preview-list');
+        container.innerHTML = '<strong>Contenu de la commande :</strong><br>';
+        tempOrderItems.forEach(i => {
+            container.innerHTML += `• ${i.name} (x${i.qty})<br>`;
         });
     }
 
-    function addToOrder() {
-        const sku = document.getElementById('order-item-select').value;
-        const qty = parseInt(document.getElementById('order-item-qty').value);
-        if(!sku || isNaN(qty)) return;
-
-        const art = articles.find(a => a.sku === sku);
-        currentNewOrderItems.push({ sku, name: art.name, qty });
-        
-        const li = document.createElement('li');
-        li.textContent = `${art.name} x ${qty}`;
-        document.getElementById('current-order-list').appendChild(li);
-        document.getElementById('btn-finalize').style.display = 'block';
-    }
-
-    function finalizeOrder() {
-        const client = document.getElementById('order-client').value || "Anonyme";
+    function saveOrder() {
+        const client = document.getElementById('order-client').value.trim() || "Client Inconnu";
         const newOrder = {
-            id: 'ORD-' + Math.floor(Math.random()*9000 + 1000),
+            id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
             client: client,
-            items: [...currentNewOrderItems],
+            date: new Date().toLocaleString('fr-FR'),
+            items: [...tempOrderItems],
             status: 'En préparation'
         };
         orders.push(newOrder);
-        save();
-        currentNewOrderItems = [];
-        document.getElementById('current-order-list').innerHTML = '';
-        document.getElementById('btn-finalize').style.display = 'none';
-        renderOrdersList();
-        toast("Commande créée ! A valider par scan.", "success");
+        addLog(`Commande créée : ${newOrder.id} pour ${client}`, "success");
+        tempOrderItems = [];
+        document.getElementById('order-client').value = '';
+        document.getElementById('order-preview-list').innerHTML = '<p style="color: #64748b; font-style: italic;">Aucun article ajouté.</p>';
+        document.getElementById('btn-save-order').style.display = 'none';
+        saveAndRefresh();
+        showToast("Commande enregistrée ! Prête pour le scan.", "success");
     }
 
     function renderOrdersList() {
         const body = document.getElementById('orders-body');
         body.innerHTML = '';
-        orders.forEach(o => {
-            const badgeClass = o.status === 'Validée' ? 'status-valide' : 'status-prep';
+        orders.slice().reverse().forEach(o => {
+            const isDone = o.status === 'Validée';
             body.innerHTML += `<tr>
                 <td>${o.id}</td>
                 <td>${o.client}</td>
-                <td><span class="status-badge ${badgeClass}">${o.status}</span></td>
-                <td>${o.status === 'En préparation' ? '<i>Scanner pour valider</i>' : 'Terminé'}</td>
+                <td>${o.date}</td>
+                <td><span class="badge ${isDone ? 'badge-done' : 'badge-prep'}">${o.status}</span></td>
             </tr>`;
         });
     }
 
-    // --- SCANNER & VALIDATION ---
+    // --- SCANNER ET VALIDATION ---
     let videoStream = null;
-    let scanningActive = false;
+    let scanning = false;
 
     function populateScanOrderSelect() {
-        const sel = document.getElementById('scan-order-id');
-        sel.innerHTML = '<option value="">-- Sélectionner Commande --</option>';
+        const sel = document.getElementById('scan-order-select');
+        sel.innerHTML = '<option value="">-- Sélectionner une commande --</option>';
         orders.filter(o => o.status === 'En préparation').forEach(o => {
             sel.innerHTML += `<option value="${o.id}">${o.id} - ${o.client}</option>`;
         });
@@ -303,89 +386,118 @@
     function startScanner() {
         const container = document.getElementById('video-container');
         container.style.display = 'block';
-        const video = document.createElement("video");
         const canvasElement = document.getElementById("preview");
         const canvas = canvasElement.getContext("2d");
+        const video = document.createElement("video");
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function(stream) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
             videoStream = stream;
             video.srcObject = stream;
-            video.setAttribute("playsinline", true); 
+            video.setAttribute("playsinline", true);
             video.play();
-            scanningActive = true;
+            scanning = true;
             requestAnimationFrame(tick);
         });
 
         function tick() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA && scanningActive) {
+            if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
                 canvasElement.height = video.videoHeight;
                 canvasElement.width = video.videoWidth;
                 canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-                var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
                 
                 if (code) {
-                    processScan(code.data);
-                    scanningActive = false;
+                    validateByScan(code.data);
+                    scanning = false;
                     stopScanner();
                 }
             }
-            if(scanningActive) requestAnimationFrame(tick);
+            if(scanning) requestAnimationFrame(tick);
         }
     }
 
     function stopScanner() {
-        scanningActive = false;
-        if(videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-        }
+        scanning = false;
+        if(videoStream) videoStream.getTracks().forEach(t => t.stop());
         document.getElementById('video-container').style.display = 'none';
     }
 
-    function processScan(sku) {
-        const orderId = document.getElementById('scan-order-id').value;
-        if(!orderId) return toast("Sélectionnez une commande d'abord !", "danger");
+    function validateByScan(scannedSku) {
+        const orderId = document.getElementById('scan-order-select').value;
+        if(!orderId) return showToast("Veuillez d'abord sélectionner une commande !", "danger");
 
         const order = orders.find(o => o.id === orderId);
-        const itemInOrder = order.items.find(i => i.sku === sku);
+        const itemNeeded = order.items.find(i => i.sku === scannedSku);
 
-        if(!itemInOrder) {
-            toast("Cet article n'est pas dans cette commande !", "danger");
+        if(!itemNeeded) {
+            alert(`ERREUR : Le SKU ${scannedSku} ne fait pas partie de la commande ${orderId}.`);
             return;
         }
 
-        // Vérification de la rupture
-        const stockArt = articles.find(a => a.sku === sku);
-        if(!stockArt || stockArt.qty < itemInOrder.qty) {
-            alert(`RUPTURE ! Stock de ${sku} insuffisant (${stockArt ? stockArt.qty : 0} dispo / ${itemInOrder.qty} requis).`);
+        // Vérification du stock pour la rupture
+        const stockArt = articles.find(a => a.sku === scannedSku);
+        if(!stockArt || stockArt.qty < itemNeeded.qty) {
+            alert(`ALERTE RUPTURE : Stock insuffisant pour ${itemNeeded.name}. (Dispo: ${stockArt ? stockArt.qty : 0} / Requis: ${itemNeeded.qty})`);
+            addLog(`Tentative de validation échouée : Rupture de stock pour ${scannedSku}`, "danger");
             return;
         }
 
-        // Validation finale
-        stockArt.qty -= itemInOrder.qty;
+        // Si OK : On déduit et on valide
+        stockArt.qty -= itemNeeded.qty;
         order.status = 'Validée';
-        save();
-        document.getElementById('scan-feedback').innerHTML = `<span style="color:green">SCAN RÉUSSI : Commande ${orderId} validée !</span>`;
-        toast("Commande validée et stock mis à jour", "success");
+        addLog(`Commande ${orderId} validée par scan de l'article ${scannedSku}`, "success");
+        saveAndRefresh();
+        
+        document.getElementById('scan-result').innerHTML = `<span style="color:var(--success)"><i class="fas fa-check-circle"></i> Commande ${orderId} Validée ! Stock mis à jour.</span>`;
+        showToast("Validation terminée avec succès", "success");
         populateScanOrderSelect();
     }
 
-    // --- UTILS ---
-    function save() {
-        localStorage.setItem('wms_articles', JSON.stringify(articles));
-        localStorage.setItem('wms_orders', JSON.stringify(orders));
+    // --- LOGS & PERSISTANCE ---
+    function addLog(msg, type) {
+        logs.unshift({ time: new Date().toLocaleTimeString(), msg, type });
+        if(logs.length > 10) logs.pop();
+        saveData();
     }
 
-    function toast(msg, type) {
+    function renderLogs() {
+        const container = document.getElementById('global-logs');
+        if(logs.length === 0) return;
+        container.innerHTML = '';
+        logs.forEach(l => {
+            const color = l.type === 'success' ? 'var(--success)' : (l.type === 'danger' ? 'var(--danger)' : 'inherit');
+            container.innerHTML += `<div class="log-entry">
+                <span style="color:${color}"><i class="fas fa-caret-right"></i> ${l.msg}</span>
+                <span class="log-time">${l.time}</span>
+            </div>`;
+        });
+    }
+
+    function saveData() {
+        localStorage.setItem('wms_v2_articles', JSON.stringify(articles));
+        localStorage.setItem('wms_v2_orders', JSON.stringify(orders));
+        localStorage.setItem('wms_v2_logs', JSON.stringify(logs));
+    }
+
+    function saveAndRefresh() {
+        saveData();
+        renderStock();
+        renderOrdersList();
+        renderLogs();
+    }
+
+    function showToast(msg, type) {
         const t = document.getElementById('toast');
         t.textContent = msg;
         t.style.background = type === 'success' ? 'var(--success)' : 'var(--danger)';
         t.style.display = 'block';
-        setTimeout(() => { t.style.display = 'none'; }, 3000);
+        setTimeout(() => t.style.display = 'none', 3000);
     }
 
-    // Init
+    // Lancement
     renderStock();
+    renderLogs();
 </script>
 
 </body>
