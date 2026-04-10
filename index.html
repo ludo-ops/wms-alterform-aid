@@ -456,20 +456,93 @@ function populateReceptionSelect(){const sel=document.getElementById('recep-arti
 function validateReception(){const artId=document.getElementById('recep-article').value;const qty=parseInt(document.getElementById('recep-qty').value)||0;const supplier=document.getElementById('recep-supplier').value.trim()||'Fournisseur inconnu';if(!artId||qty<=0){toast('Article et quantité requis','error');return}const arts=getArticles();const art=arts.find(a=>a.id===artId);if(!art)return;art.qty+=qty;setArticles(arts);addHistory('in',art.name,qty,supplier,document.getElementById('recep-notes').value);toast(`+${qty} ${art.name} réceptionnés`,'success');beep('success');document.getElementById('recep-qty').value=1;document.getElementById('recep-notes').value=''}
 function addHistory(type,article,qty,ref='',note=''){const hist=getHistory();hist.push({id:uuid(),type,article,qty,ref,note,date:new Date().toISOString()});setHistory(hist)}
 function renderHistoryTable(){const hist=getHistory().slice().reverse();const tb=document.getElementById('history-tbody');if(!hist.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Aucun mouvement</td></tr>';return}tb.innerHTML=hist.map(h=>`<tr><td>${fmtDate(h.date)}</td><td><span class="badge ${h.type==='in'?'badge-green':'badge-red'}">${h.type==='in'?'Entrée':'Sortie'}</span></td><td>${h.article}</td><td class="${h.type==='in'?'hist-in':'hist-out'}"><strong>${h.type==='in'?'+':'-'}${h.qty}</strong></td><td>${h.ref||'—'}</td><td style="max-width:160px;font-size:.8rem;color:var(--text-muted)">${h.note||'—'}</td></tr>`).join('')}
-function renderOrdersTable(){const orders=getOrders().slice().reverse();const tb=document.getElementById('orders-tbody');if(!orders.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Aucune commande</td></tr>';return}tb.innerHTML=orders.map(o=>{const statusBadge={pending:'badge-orange',validated:'badge-green',cancelled:'badge-red'}[o.status]||'badge-gray';const statusLabel={pending:'En cours',validated:'Validée',cancelled:'Annulée'}[o.status]||o.status;return `<tr><td><code style="font-size:.78rem;color:#ea580c">#${o.id.slice(-6).toUpperCase()}</code></td><td>${fmtDate(o.date)}</td><td>${o.client||'—'}</td><td>${o.items.reduce((s,i)=>s+i.qty,0)} articles</td><td><span class="badge ${statusBadge}">${statusLabel}</span></td><td style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="showOrderDetail('${o.id}')"><i class="fa fa-eye"></i></button>${o.status==='validated'?`<button class="btn btn-primary btn-sm" onclick="currentPrintOrderId='${o.id}';printOrder()"><i class="fa fa-print"></i></button>`:''}${o.status==='pending'?`<button class="btn btn-danger btn-sm" onclick="cancelOrder('${o.id}')"><i class="fa fa-ban"></i></button>`:''}</td></tr>`}).join('')}
-function cancelOrder(id){const orders=getOrders();const o=orders.find(x=>x.id===id);if(!o)return;o.status='cancelled';setOrders(orders);renderOrdersTable();toast('Commande annulée','warning')}
-let currentPrintOrderId=null;
-function showOrderDetail(id){currentPrintOrderId=id;const o=getOrders().find(x=>x.id===id);if(!o)return;const statusLabel={pending:'En cours',validated:'Validée',cancelled:'Annulée'}[o.status]||o.status;document.getElementById('order-detail-content').innerHTML=`<div style="margin-bottom:14px"><div style="font-size:.82rem;color:var(--text-muted)">Commande #${o.id.slice(-6).toUpperCase()} – ${fmtDate(o.date)}</div><div><strong>Client :</strong> ${o.client||'—'}</div><div><strong>Statut :</strong> ${statusLabel}</div></div><table style="width:100%"><thead><tr><th>SKU</th><th>Article</th><th>Qté</th></tr></thead><tbody>${o.items.map(i=>`<tr><td><code style="font-size:.75rem">${i.sku}</code></td><td>${i.name}</td><td><strong>${i.qty}</strong></td></tr>`).join('')}</tbody></table><div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between"><strong>Total articles</strong><strong>${o.items.reduce((s,i)=>s+i.qty,0)}</strong></div>`;openModal('modal-order-detail')}
-function printOrder(){const o=getOrders().find(x=>x.id===currentPrintOrderId);if(!o)return;const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});let y=20;doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('BON DE PRÉPARATION',105,y,{align:'center'});y+=8;doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(`Commande #${o.id.slice(-6).toUpperCase()}  |  ${fmtDate(o.date)}`,105,y,{align:'center'});y+=5;doc.text(`Client : ${o.client||'—'}`,105,y,{align:'center'});y+=10;doc.setLineWidth(.3);doc.line(20,y,190,y);y+=6;doc.setFont('helvetica','bold');doc.text('SKU',22,y);doc.text('Article',60,y);doc.text('Qté',175,y);y+=5;doc.line(20,y,190,y);y+=5;doc.setFont('helvetica','normal');o.items.forEach(item=>{doc.text(item.sku,22,y);doc.text(item.name.substring(0,38),60,y);doc.text(String(item.qty),175,y);y+=6});y+=3;doc.line(20,y,190,y);y+=6;doc.setFont('helvetica','bold');doc.text('Total articles :',140,y);doc.text(String(o.items.reduce((s,i)=>s+i.qty,0)),175,y);doc.save(`commande-${o.id.slice(-6).toUpperCase()}.pdf`);toast('PDF généré','success')}
-let newOrderLines=[];
-function openNewOrderModal(){newOrderLines=[{articleId:'',qty:1}];document.getElementById('new-order-client').value='';renderNewOrderLines();openModal('modal-new-order')}
-function renderNewOrderLines(){const arts=getArticles();const opts=arts.map(a=>`<option value="${a.id}">${a.name} (stock:${a.qty})</option>`).join('');document.getElementById('new-order-lines').innerHTML=newOrderLines.map((l,i)=>`<div style="display:grid;grid-template-columns:1fr 80px 32px;gap:8px;margin-bottom:8px;align-items:center"><select class="form-control" onchange="newOrderLines[${i}].articleId=this.value"><option value="">— Choisir —</option>${opts}</select><input class="form-control" type="number" min="1" value="${l.qty}" onchange="newOrderLines[${i}].qty=parseInt(this.value)||1"/><button class="btn-icon" onclick="newOrderLines.splice(${i},1);renderNewOrderLines()" style="color:var(--danger)"><i class="fa fa-xmark"></i></button></div>`).join('')}
-function addOrderLine(){newOrderLines.push({articleId:'',qty:1});renderNewOrderLines()}
-function saveManualOrder(){const client=document.getElementById('new-order-client').value.trim();const arts=getArticles();const items=[];for(const l of newOrderLines){if(!l.articleId)continue;const a=arts.find(x=>x.id===l.articleId);if(!a)continue;if(a.qty<l.qty){toast(`Stock insuffisant pour ${a.name}`,'error');return}items.push({articleId:a.id,name:a.name,sku:a.sku,qty:l.qty})}if(!items.length){toast('Ajoutez au moins un article','error');return}items.forEach(item=>{const a=arts.find(x=>x.id===item.articleId);a.qty-=item.qty;addHistory('out',item.name,item.qty,client||'Commande manuelle','')});setArticles(arts);const order={id:uuid(),date:new Date().toISOString(),client,items,status:'validated'};const orders=getOrders();orders.push(order);setOrders(orders);closeModal('modal-new-order');renderOrdersTable();toast('Commande validée','success');beep('success')}
-function searchOrders(){const q=document.getElementById('order-search-input').value.trim().toLowerCase();const res=document.getElementById('order-search-results');if(q.length<2){res.innerHTML='';return}const found=getOrders().filter(o=>o.id.slice(-6).toLowerCase().includes(q)||(o.client||'').toLowerCase().includes(q));if(!found.length){res.innerHTML='<div style="color:#64748b;padding:8px;font-size:.8rem">Aucun résultat</div>';return}res.innerHTML=found.slice(0,5).map(o=>`<div class="search-result-item" onclick="loadOrderIntoTerminal('${o.id}')"><i class="fa fa-basket-shopping"></i> <strong>#${o.id.slice(-6).toUpperCase()}</strong> – ${o.client||'Sans client'} – ${o.items.reduce((s,i)=>s+i.qty,0)} articles</div>`).join('')}
-function loadOrderIntoTerminal(id){const o=getOrders().find(x=>x.id===id);if(!o)return;currentOrderItems=o.items.map(i=>({...i,checked:false}));document.getElementById('scan-client').value=o.client||'';document.getElementById('order-search-input').value='';document.getElementById('order-search-results').innerHTML='';renderScannerOrder();toast(`Commande #${id.slice(-6).toUpperCase()} chargée`,'success')}
-let scanStream=null,scanInterval=null,scanLocked=false,currentOrderItems=[];
-function populateScannerOrder(){renderScannerOrder()}
+function renderOrdersTable(){
+  const orders = getOrders().slice().reverse();
+  const tbody = document.getElementById('orders-tbody');
+  if(!orders.length){
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Aucune commande</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orders.map(o => {
+    const statusBadge = o.status === 'pending' ? 'badge-orange' : 'badge-green';
+    const statusLabel = o.status === 'pending' ? 'En attente' : 'Validé';
+    return `
+      <tr>
+        <td><code style="font-size:.78rem;color:ea580c">${o.id.slice(-6).toUpperCase()}</code></td>
+        <td>${fmtDate(o.date)}</td>
+        <td>${o.client}</td>
+        <td>${o.items.reduce((s,i)=>s+i.qty,0)} articles</td>
+        <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+        <td>
+          ${o.status === 'pending' ? 
+            `<button class="btn btn-sm btn-success" onclick="validateOrder('${o.id}')">
+              <i class="fa fa-check-circle"></i> Valider stock
+            </button>` : 
+            `<span class="text-success"><i class="fa fa-check"></i> Validé</span>`
+          }
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function cancelOrder(id){
+  const orders = getOrders();
+  const order = orders.find(x=>x.id===id);
+  if(!order) return;
+  order.status = 'cancelled';
+  setOrders(orders);
+  renderOrdersTable();
+  toast('Commande annulée', 'warning');
+}
+
+function showOrderDetail(id){
+  currentPrintOrderId = id;
+  const order = getOrders().find(x=>x.id===id);
+  if(!order) return;
+  const statusLabel = order.status === 'pending' ? 'En cours' : order.status === 'validated' ? 'Validé' : 'Annulée';
+  toast(`${statusLabel}: ${order.id.slice(-6).toUpperCase()}`, 'info');
+}
+
+function printOrder(){
+  const o = getOrders().find(x=>x.id===currentPrintOrderId);
+  if(!o) return;
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
+  // ... reste du code print
+}
+
+function openNewOrderModal(){newOrderLines = [];document.getElementById('new-order-client').value = '';renderNewOrderLines();openModal('modal-new-order');}
+
+function renderNewOrderLines(){
+  const arts = getArticles();
+  const opts = arts.map(a=>`<option value="${a.id}">${a.name} (${a.stock})</option>`).join('');
+  document.getElementById('new-order-lin').innerHTML = opts;
+}
+
+function addOrderLine(){newOrderLines.push({articleId:'', qty:1});renderNewOrderLines();}
+
+function saveManualOrder(){
+  const client = document.getElementById('new-order-client').value.trim();
+  const arts = getArticles();
+  const items = [];
+  for(let i=0; i<newOrderLines.length; i++){
+    const artId = document.getElementById(`new-order-lin-${i}`).value;
+    const art = arts.find(x=>x.id===artId);
+    if(art) items.push({articleId:art.id, name:art.name, sku:art.sku, qty:1});
+  }
+  if(items.length){
+    const orderId = 'ORD'+Date.now();
+    const orders = getOrders() || [];
+    orders.push({id:orderId, date:new Date().toLocaleString(), client, items, status:'pending'});
+    setOrders(orders);
+    renderOrdersTable();
+    toast('Commande créée', 'success');
+  }
+  clearCurrentOrder();
+  document.getElementById('scan-client').value = '';
+}
+
+function populateScannerOrder(){renderScannerOrder();}
 function renderScannerOrder(){const list=document.getElementById('order-items-list');if(!currentOrderItems.length){list.innerHTML='<div style="color:#475569;text-align:center;padding:30px;font-size:.85rem"><i class="fa fa-qrcode" style="font-size:2rem;display:block;margin-bottom:8px;color:#f97316"></i>Scannez un article pour l\'ajouter</div>';document.getElementById('order-total-qty').textContent='0';return}list.innerHTML=currentOrderItems.map((item,i)=>`<div class="order-row${item.checked?' checked':''}" id="order-row-${i}"><div><i class="fa fa-circle-check item-check"></i><div class="item-name">${item.name}</div><div class="item-sku">${item.sku}</div></div><div class="order-qty"><button onclick="changeQty(${i},-1)"><i class="fa fa-minus"></i></button><span>${item.qty}</span><button onclick="changeQty(${i},1)"><i class="fa fa-plus"></i></button><button onclick="toggleCheck(${i})" style="background:${item.checked?'#16a34a':'#334155'}" title="Marquer préparé"><i class="fa fa-${item.checked?'check':'circle'}"></i></button><button onclick="removeOrderItem(${i})" style="background:#ef4444;color:#fff"><i class="fa fa-xmark"></i></button></div></div>`).join('');document.getElementById('order-total-qty').textContent=currentOrderItems.reduce((s,i)=>s+i.qty,0)}
 function toggleCheck(i){currentOrderItems[i].checked=!currentOrderItems[i].checked;renderScannerOrder()}
 function changeQty(i,delta){currentOrderItems[i].qty+=delta;if(currentOrderItems[i].qty<=0)currentOrderItems.splice(i,1);renderScannerOrder()}
