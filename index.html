@@ -306,10 +306,7 @@ body.night-mode .btn-recep{background:linear-gradient(135deg,#22c55e,#16a34a);bo
     <div class="form-actions"><button class="btn-recep" onclick="validateReception()"><i class="fa fa-truck-ramp-box"></i> Valider la réception <i class="fa fa-circle-check"></i></button></div>
   </div>
 </section>
-<section class="page" id="page-orders">
-  <div class="topbar"><h1><i class="fa fa-basket-shopping"></i> Commandes</h1><div class="topbar-actions"><button class="btn btn-primary" onclick="openNewOrderModal()"><i class="fa fa-plus"></i> Nouvelle commande</button></div></div>
-  <div class="card"><div class="table-wrap"><table><thead><tr><th>#</th><th>Date</th><th>Client</th><th>Articles</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="orders-tbody"></tbody></table></div></div>
-</section>
+<table class="table-wrap"><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Articles</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="orders-tbody"></tbody></table>
 <section class="page" id="page-scanner">
   <div class="topbar"><h1><i class="fa fa-qrcode"></i> Scanner QR Code</h1></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start" id="scanner-layout">
@@ -348,7 +345,9 @@ body.night-mode .btn-recep{background:linear-gradient(135deg,#22c55e,#16a34a);bo
       <div id="order-items-list"><div style="color:#475569;text-align:center;padding:30px;font-size:.85rem"><i class="fa fa-qrcode" style="font-size:2rem;display:block;margin-bottom:8px;color:#f97316"></i>Scannez un article pour l'ajouter</div></div>
       <div class="order-total"><div class="total-label">TOTAL ARTICLES</div><div class="total-value" id="order-total-qty">0</div></div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-success" style="flex:1" onclick="validateCurrentOrder()"><i class="fa fa-check"></i> Valider commande</button>
+        <button class="btn btn-success" style="flex:1" onclick="createPendingOrder()">
+  <i class="fa fa-paper-plane"></i> Envoyer commande
+</button>
         <button class="btn btn-outline btn-sm" onclick="clearCurrentOrder()"><i class="fa fa-trash"></i></button>
       </div>
     </div>
@@ -478,18 +477,52 @@ function removeOrderItem(i){currentOrderItems.splice(i,1);renderScannerOrder()}
 function clearCurrentOrder(){currentOrderItems=[];renderScannerOrder()}
 function addScannedItem(sku){const arts=getArticles();const art=arts.find(a=>a.sku===sku||a.id===sku);if(!art){showScanFeedback('Article introuvable : '+sku,false);beep('error');return}if(art.qty<=0){showScanFeedback('Stock épuisé : '+art.name,false);beep('error');return}const existing=currentOrderItems.find(i=>i.articleId===art.id);if(existing){existing.qty++;existing.checked=false}else currentOrderItems.push({articleId:art.id,name:art.name,sku:art.sku,qty:1,checked:false});renderScannerOrder();showScanFeedback('✓ '+art.name+' ajouté',true);beep('success')}
 function showScanFeedback(msg,ok){const el=document.getElementById('scan-feedback');el.textContent=msg;el.className='scan-feedback '+(ok?'success':'error');clearTimeout(el._t);el._t=setTimeout(()=>el.className='scan-feedback',2500)}
-function validateCurrentOrder(){if(!currentOrderItems.length){toast('Aucun article','warning');return}const arts=getArticles();for(const item of currentOrderItems){const a=arts.find(x=>x.id===item.articleId);if(!a||a.qty<item.qty){toast(`Stock insuffisant pour ${item.name}`,'error');return}}const client=document.getElementById('scan-client').value.trim();currentOrderItems.forEach(item=>{const a=arts.find(x=>x.id===item.articleId);a.qty-=item.qty;addHistory('out',item.name,item.qty,client||'Scanner','')});setArticles(arts);const order={id:uuid(),date:new Date().toISOString(),client,items:currentOrderItems.map(i=>({articleId:i.articleId,name:i.name,sku:i.sku,qty:i.qty})),status:'validated'};const orders=getOrders();orders.push(order);setOrders(orders);toast('Commande validée !','success');beep('success');clearCurrentOrder();document.getElementById('scan-client').value=''}
-function startCamera(){if(!navigator.mediaDevices){toast('Caméra non supportée','error');return}navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:960}},audio:false}).then(stream=>{scanStream=stream;const vid=document.getElementById('scanner-video');vid.srcObject=stream;vid.play();document.getElementById('btn-start-scan').disabled=true;document.getElementById('btn-stop-scan').disabled=false;toast('Caméra démarrée','success');scanInterval=setInterval(scanFrame,250)}).catch(e=>{toast('Accès caméra refusé : '+e.message,'error')})}
-function stopCamera(){if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}clearInterval(scanInterval);scanInterval=null;const vid=document.getElementById('scanner-video');vid.srcObject=null;document.getElementById('btn-start-scan').disabled=false;document.getElementById('btn-stop-scan').disabled=true}
-function scanFrame(){const vid=document.getElementById('scanner-video');if(vid.readyState!==vid.HAVE_ENOUGH_DATA)return;const canvas=document.getElementById('scanner-canvas');canvas.width=vid.videoWidth;canvas.height=vid.videoHeight;const ctx=canvas.getContext('2d');ctx.drawImage(vid,0,0);const img=ctx.getImageData(0,0,canvas.width,canvas.height);const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});if(code&&!scanLocked){scanLocked=true;addScannedItem(code.data);setTimeout(()=>scanLocked=false,1500)}}
-let gunBuffer='',gunTimer=null;
-document.addEventListener('keydown',e=>{if(currentPage!=='scanner')return;if(e.key==='Enter'){if(gunBuffer.length>2)addScannedItem(gunBuffer.trim());gunBuffer='';clearTimeout(gunTimer);return}if(e.key.length===1){gunBuffer+=e.key;clearTimeout(gunTimer);gunTimer=setTimeout(()=>{gunBuffer=''},600)}});
-function renderQRGrid(){const arts=getArticles();const grid=document.getElementById('qr-print-grid');if(!arts.length){grid.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:30px">Aucun article.</div>';return}grid.innerHTML=arts.map((a,idx)=>`<div class="qr-label" onclick="openQRZoom('${a.id}')" title="Cliquer pour agrandir"><div id="qrbox-${a.id}"></div><div class="label-name">${a.name}</div><div class="label-sku">${a.sku}</div><svg id="barbox-${a.id}" style="display:block;margin:8px auto 0;max-width:100%"></svg><div style="margin-top:6px;font-size:.7rem;color:#f97316"><i class="fa fa-expand"></i> Agrandir</div></div>`).join('');arts.forEach((a,idx)=>{setTimeout(()=>{const el=document.getElementById('qrbox-'+a.id);if(!el)return;el.innerHTML='';try{new QRCode(el,{text:a.sku,width:100,height:100,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent='QR error'}try{const svg=document.getElementById('barbox-'+a.id);if(svg)JsBarcode(svg,a.sku,{format:'CODE128',width:1,height:28,displayValue:true,fontSize:8,margin:2})}catch(e){}},idx*60)})}
-let zoomArticleId=null;
-function openQRZoom(artId){zoomArticleId=artId;const art=getArticles().find(a=>a.id===artId);if(!art)return;document.getElementById('qr-zoom-name').textContent=art.name;document.getElementById('qr-zoom-sku').textContent=art.sku;const content=document.getElementById('qr-zoom-content');content.innerHTML='';try{new QRCode(content,{text:art.sku,width:220,height:220,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M})}catch(e){content.textContent='QR error'}setTimeout(()=>{try{JsBarcode('#bar-zoom',art.sku,{format:'CODE128',width:2,height:60,displayValue:true,fontSize:12,margin:6})}catch(e){}},150);openModal('modal-qr-zoom')}
-function printZoomQR(){const art=getArticles().find(a=>a.id===zoomArticleId);if(!art)return;const el=document.getElementById('qr-zoom-content');const cvs=el.querySelector('canvas');const imgSrc=cvs?cvs.toDataURL():'';const bSvg=document.getElementById('bar-zoom');const bSrc=bSvg?'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(bSvg.outerHTML))):'';const w=window.open('','_blank','width=400,height=500');w.document.write(`<!DOCTYPE html><html><head><title>${art.sku}</title><style>body{display:flex;flex-direction:column;align-items:center;font-family:sans-serif;padding:20px;text-align:center}img{display:block;margin:0 auto}</style></head><body>${imgSrc?`<img src="${imgSrc}" width="200"/>`:''}<strong style="font-size:15px;margin:8px 0;display:block">${art.name}</strong><div style="font-size:12px;color:#666;margin-bottom:8px">${art.sku}</div>${bSrc?`<img src="${bSrc}" width="280"/>`:''}<script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
-function printAllQR(){const arts=getArticles();if(!arts.length){toast('Aucun article','warning');return}const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});let x=15,y=15,col=0;const perRow=4,cellW=45,cellH=60;arts.forEach((art,idx)=>{const el=document.getElementById('qrbox-'+art.id);if(el){const cvs=el.querySelector('canvas');if(cvs)doc.addImage(cvs.toDataURL('image/png'),'PNG',x+2,y+2,35,35)}doc.setFontSize(7);doc.setFont('helvetica','bold');doc.text(art.name.substring(0,22),x+22,y+40,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(6);doc.text(art.sku,x+22,y+46,{align:'center'});doc.rect(x,y,cellW,cellH);col++;x+=cellW+3;if(col>=perRow){col=0;x=15;y+=cellH+5}if(y>260&&idx<arts.length-1){doc.addPage();x=15;y=15;col=0}});doc.save('etiquettes-qr-alterform.pdf');toast('PDF étiquettes généré','success')}
-document.addEventListener('DOMContentLoaded',()=>{renderDashboard();if(!getArticles().length)loadDemoData()});
+function createPendingOrder() {
+  if (!currentOrderItems.length) { toast("Aucun article", "warning"); return; }
+  const client = document.getElementById('scan-client').value.trim();
+  if (!client) { toast("Nom client requis", "warning"); return; }
+
+  const order = {
+    id: 'ORD' + Date.now(),
+    date: new Date().toLocaleString(),
+    client,
+    items: currentOrderItems.map(i => ({ name: i.name, sku: i.sku, qty: i.qty })),
+    status: "pending"
+  };
+
+  const orders = getOrders() || [];
+  orders.push(order);
+  setOrders(orders);
+
+  toast(`Commande ${order.id} créée (en attente)`, "success");
+  clearCurrentOrder();
+  document.getElementById('scan-client').value = "";
+}
+function validateOrder(orderId) {
+  const orders = getOrders();
+  const orderIndex = orders.findIndex(o => o.id === orderId);
+  if (orderIndex === -1) return;
+  const order = orders[orderIndex];
+  let valid = true;
+  for (let item of order.items) {
+    const article = articles.find(a => a.sku === item.sku);
+    if (!article || article.qty < item.qty) {
+      toast(`Stock insuffisant: ${item.name} (${article ? article.qty : 0}/${item.qty})`, "error");
+      valid = false;
+      break;
+    }
+  }
+  if (valid) {
+    for (let item of order.items) {
+      const article = articles.find(a => a.sku === item.sku);
+      article.qty -= item.qty;
+    }
+    order.status = "validated";
+    setOrders(orders);
+    setArticles(articles);
+    toast("Commande validée et stock mis à jour !", "success");
+  }
+}
 
 </script>
 </body>
